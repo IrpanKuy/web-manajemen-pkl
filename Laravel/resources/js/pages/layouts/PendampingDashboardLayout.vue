@@ -1,0 +1,161 @@
+<script setup>
+import { usePage, Link, router } from "@inertiajs/vue3";
+import { computed, onMounted, ref, watch } from "vue";
+import DashboardLayout from "./dashboardLayout.vue";
+
+const showMasterDataDropdown = ref(false);
+
+const page = usePage();
+const currentRouteName = computed(() => page.props.currentRoute.name);
+
+// pengkondisian route
+const isLinkActive = (routeName) => {
+    return currentRouteName.value === routeName;
+};
+</script>
+<template>
+    <DashboardLayout>
+        <template #sidebar-menu>
+            <button
+                @click="showMasterDataDropdown = !showMasterDataDropdown"
+                :class="{
+                    'bg-[#4A60AA]!':
+                        isLinkActive('jurusan.index') ||
+                        isLinkActive('kelas.binaan'),
+                    'hover:bg-[#2C48A5]! ':
+                        !isLinkActive('jurusan.index') &&
+                        !isLinkActive('kelas.binaan'),
+                }"
+                class="w-full text-lg text-white font-medium! transition duration-150 flex items-center justify-between px-3 py-2 rounded-md cursor-pointer"
+            >
+                <div class="flex items-center gap-3">
+                    <Icon icon="mdi:folder" width="24" class="text-white" />
+                    <div>Master Data</div>
+                </div>
+
+                <Icon
+                    icon="mdi:chevron-down"
+                    width="18"
+                    class="transition-transform duration-200 text-white"
+                    :class="{
+                        'rotate-180': showMasterDataDropdown,
+                    }"
+                />
+            </button>
+
+            <!-- Dropdown -->
+            <Transition name="fade">
+                <div
+                    v-if="showMasterDataDropdown"
+                    class="flex flex-col flex-start pl-8 gap-1 mt-1 rounded-md transition-all duration-300"
+                >
+                    <!-- Submenu 1 -->
+                    <Link
+                        :href="route('jurusan.index')"
+                        :class="{
+                            'bg-[#4A60AA]!': isLinkActive('jurusan.index'),
+                            'hover:bg-[#2C48A5]!':
+                                !isLinkActive('jurusan.index'),
+                        }"
+                        class="text-white font-medium! transition duration-150 flex items-center gap-3 px-4 py-2 rounded-md"
+                    >
+                        <Icon icon="mdi:school" width="20" />
+                        <div>Jurusan</div>
+                    </Link>
+
+                    <!-- Submenu 2 -->
+                    <Link
+                        :href="route('data-siswa.index')"
+                        :class="{
+                            'bg-[#4A60AA]!': isLinkActive('data-siswa.index'),
+                            'hover:bg-[#2C48A5]!':
+                                !isLinkActive('data-siswa.index'),
+                        }"
+                        class="text-white font-medium! transition duration-150 flex items-center gap-3 px-4 py-2 rounded-md"
+                    >
+                        <Icon icon="mdi:user-group" width="20" />
+                        <div>Data Siswa</div>
+                    </Link>
+                </div>
+            </Transition>
+
+            <Link
+                :href="route('mitra-industri.index')"
+                :class="{
+                    'bg-[#4A60AA]!': isLinkActive('mitra-industri.index'),
+                    'hover:bg-[#2C48A5]!': !isLinkActive(
+                        'mitra-industri.index'
+                    ),
+                }"
+                class="text-white font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
+            >
+                <Icon icon="mdi:sitemap" width="24" />
+                <div>Mitra Industri</div>
+            </Link>
+
+            <Link
+                :href="route('manajemen-role.index')"
+                :class="{
+                    'bg-[#4A60AA]!': isLinkActive('manajemen-role.index'),
+                    'hover:bg-[#2C48A5]!': !isLinkActive(
+                        'manajemen-role.index'
+                    ),
+                }"
+                class="text-white font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
+            >
+                <Icon icon="mdi:account-key" width="24" />
+                <div>Manajemen Role</div>
+            </Link>
+        </template>
+        <template #content>
+            <slot />
+        </template>
+        <template #headerTitle>
+            <slot name="headerTitle" />
+        </template>
+    </DashboardLayout>
+</template>
+
+<style scoped>
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.86);
+}
+/* Status awal saat muncul (enter-from) & status akhir saat menghilang (leave-to) */
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+    transform: translateX(-100%);
+}
+
+/* Status normal (di layar) */
+.fade-slide-enter-to,
+.fade-slide-leave-from {
+    transform: translateX(0);
+}
+
+/*
+ * TRANSITION: FADE (Memudar Masuk/Keluar)
+ * Target: name="fade"
+ */
+
+/* Aktifkan Transisi */
+.fade-enter-active,
+.fade-leave-active {
+    /* Hanya transisi opacity, durasi 0.3 detik */
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Status Awal (Saat Masuk) & Status Akhir (Saat Keluar) */
+.fade-enter-from,
+.fade-leave-to {
+    /* Dimulai dari transparan (tidak terlihat) */
+    opacity: 0;
+}
+
+/* Status Normal (Di layar) */
+.fade-enter-to,
+.fade-leave-from {
+    /* Opacity penuh (terlihat jelas) */
+    opacity: 1;
+}
+</style>

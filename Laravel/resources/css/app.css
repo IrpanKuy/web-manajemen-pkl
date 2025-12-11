@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@important;
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-poppins: "Poppins", sans-serif;
+}
+
+/* resources/css/app.css */
+
+/* [Penting]: Kode Perbaikan Scrollbar */
+html,
+body {
+    /* Memaksa scrollbar vertikal untuk selalu ada, 
+       mencegah konten meloncat ketika v-dialog terbuka 
+       dan Vuetify menyuntikkan overflow: hidden */
+    overflow-y: scroll !important;
+}
+
+/* --- Kode CSS/styling lainnya di sini --- */
+/* ... */
