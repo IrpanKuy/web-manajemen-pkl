@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Instansi\MitraIndustri;
 use App\Models\User;
-use App\Models\MitraIndustri;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;

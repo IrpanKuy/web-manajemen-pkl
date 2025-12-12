@@ -5,6 +5,7 @@ namespace App\Models\User;
 use App\Models\Instansi\PklPlacement;
 use App\Models\Pendamping\Jurusan;
 use App\Models\Siswa\Absensi;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
 class ProfileSiswa extends Model

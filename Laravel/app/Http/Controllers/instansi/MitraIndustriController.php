@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Instansi;
 use App\Http\Controllers\Controller;
 use App\Models\Instansi\MitraIndustri;
 use App\Models\Pendamping\Jurusan;
-use App\Models\User\User;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;

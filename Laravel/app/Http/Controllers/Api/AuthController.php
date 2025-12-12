@@ -24,7 +24,6 @@ class AuthController extends Controller
                 'message' => 'Email atau password salah'
             ], 401);
         }
-
         // 3. Generate Token: Jika cocok, buat token Sanctum
         $user = Auth::user();
         // 'auth_token' adalah nama token yang kita berikan

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\pendamping;
 
 use App\Http\Controllers\Controller;
-use App\Models\User\User;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;

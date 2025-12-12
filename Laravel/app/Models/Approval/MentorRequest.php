@@ -3,7 +3,7 @@
 namespace App\Models\Approval;
 
 use App\Models\User\ProfileSiswa;
-use App\Models\User\User;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
 class MentorRequest extends Model

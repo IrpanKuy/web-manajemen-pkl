@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Models\User;
+namespace App\Models;
 
 use App\Models\Instansi\MitraIndustri;
 use App\Models\Instansi\PklPlacement;
+use App\Models\User\ProfilePembimbing;
+use App\Models\User\ProfileSiswa;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;

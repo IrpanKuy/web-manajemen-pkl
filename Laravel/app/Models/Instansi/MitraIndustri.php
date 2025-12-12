@@ -6,7 +6,7 @@ use App\Http\Controllers\ProfilePembimbingController;
 use App\Models\Approval\PengajuanMasukSiswa;
 use App\Models\ProfilePembimbing;
 use App\Models\Siswa\Absensi;
-use App\Models\User\User;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
 class MitraIndustri extends Model

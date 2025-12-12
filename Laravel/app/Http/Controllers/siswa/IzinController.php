@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Izin;
+use App\Models\Siswa\Izin;
 use Illuminate\Http\Request;
 
 class IzinController extends Controller

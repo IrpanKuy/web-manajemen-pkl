@@ -3,7 +3,7 @@
 namespace App\Models\Instansi;
 
 use App\Models\User\ProfileSiswa;
-use App\Models\User\User;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
 class JurnalHarian extends Model

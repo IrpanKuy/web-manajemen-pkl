@@ -4,7 +4,7 @@ namespace App\Http\Controllers\pendamping;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pendamping\Jurusan;
-use App\Models\User\User;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;

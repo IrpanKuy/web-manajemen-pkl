@@ -1,4 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/core/api/dio_client.dart';
+import 'package:flutter_app/core/api/rest_client.dart';
+import 'package:flutter_app/data/models/login_request.dart';
+import 'package:flutter_app/data/storage/token_storage.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -12,8 +17,56 @@ class _LoginState extends State<Login> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  late RestClient _client;
+  final TokenStorage _tokenStorage = TokenStorage();
+  bool _isLoading = false;
+
   // State untuk melihat password
   bool _isPasswordVisible = false;
+  @override
+  void initState() {
+    super.initState();
+    final dio = DioClient().dio;
+    _client = RestClient(dio);
+  }
+
+  Future<void> _doLogin() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final request = LoginRequest(
+          email: _emailController.text, password: _passwordController.text);
+
+      final response = await _client.login(request);
+
+      if (mounted) {
+        if (response.token != null) {
+          await _tokenStorage.saveToken(response.token!);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Login Berhasil!')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Login gagal!')),
+          );
+        }
+      }
+    } on DioException catch (e) {
+      String errorMessage = "Terjadi kesalahan";
+      if (e.response != null) {
+        errorMessage = e.response?.data['message'] ?? "Login Gagal";
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,8 +83,8 @@ class _LoginState extends State<Login> {
                 Container(
                   height: 120, // Sesuaikan tinggi logo
                   width: 300,
-                  decoration: BoxDecoration(
-                    image: const DecorationImage(
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
                       image: AssetImage('assets/images/logo-mutu.png'),
                       fit: BoxFit.contain,
                     ),
@@ -148,12 +201,7 @@ class _LoginState extends State<Login> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // Logika login nanti di sini
-                      print("Tombol Login Ditekan");
-                      print("Email: ${_emailController.text}");
-                      print("Password: ${_passwordController.text}");
-                    },
+                    onPressed: _isLoading ? null : _doLogin,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1E3A8A), // Warna tombol
                       foregroundColor: Colors.white, // Warna teks
@@ -162,14 +210,23 @@ class _LoginState extends State<Login> {
                       ),
                       elevation: 2,
                     ),
-                    child: const Text(
-                      'MASUK',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 3,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'MASUK',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1,
+                            ),
+                          ),
                   ),
                 ),
 

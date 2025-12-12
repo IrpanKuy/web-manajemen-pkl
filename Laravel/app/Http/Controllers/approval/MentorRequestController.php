@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\MentorRequest;
+use App\Models\Approval\MentorRequest;
 use Illuminate\Http\Request;
 
 class MentorRequestController extends Controller
