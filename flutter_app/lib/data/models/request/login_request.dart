@@ -7,8 +7,9 @@ class LoginRequest {
   final String email;
   final String password;
 
+  // kirim request
   LoginRequest({required this.email, required this.password});
 
-  // Retrofit butuh ini untuk mengirim data (Request Body)
+  // ubah ke json
   Map<String, dynamic> toJson() => _$LoginRequestToJson(this);
 }

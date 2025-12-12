@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/core/api/dio_client.dart';
-import 'package:flutter_app/core/api/rest_client.dart';
-import 'package:flutter_app/data/models/login_request.dart';
+import 'package:flutter_app/core/api/client/auth_client.dart';
+import 'package:flutter_app/data/models/request/login_request.dart';
 import 'package:flutter_app/data/storage/token_storage.dart';
 
 class Login extends StatefulWidget {
@@ -17,53 +17,76 @@ class _LoginState extends State<Login> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  late RestClient _client;
+  late AuthClient _client;
   final TokenStorage _tokenStorage = TokenStorage();
   bool _isLoading = false;
 
-  // State untuk melihat password
+// State untuk toggle lihat/tutup password
   bool _isPasswordVisible = false;
+
   @override
   void initState() {
     super.initState();
+
+    // Ambil instance Dio yang sudah dikonfigurasi (punya baseUrl, headers, dll)
     final dio = DioClient().dio;
-    _client = RestClient(dio);
+
+    // Inisialisasi AuthClient yang dipakai buat semua request API
+    _client = AuthClient(dio);
   }
 
   Future<void> _doLogin() async {
+    // Aktifkan loading indicator
     setState(() => _isLoading = true);
 
     try {
+      // Buat body request login dari textfield
       final request = LoginRequest(
-          email: _emailController.text, password: _passwordController.text);
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
 
+      // Kirim request login ke server
       final response = await _client.login(request);
 
-      if (mounted) {
-        if (response.token != null) {
-          await _tokenStorage.saveToken(response.token!);
+      // Ambil token dari response (null jika gagal login)
+      final token = response.data?.token;
 
+      // Cek apakah widget masih aktif (anti error setState setelah dispose)
+      if (mounted) {
+        if (token != null) {
+          // Simpan token ke storage (SharedPreferences)
+          await _tokenStorage.saveToken(token);
+
+          // Notifikasi sukses
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Login Berhasil!')),
           );
         } else {
+          // Response OK tapi token kosong → gagal login
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Login gagal!')),
           );
         }
       }
     } on DioException catch (e) {
+      // Default error message
       String errorMessage = "Terjadi kesalahan";
+
+      // Jika server memberi response (status code 4xx/5xx)
       if (e.response != null) {
+        // Ambil pesan dari backend
         errorMessage = e.response?.data['message'] ?? "Login Gagal";
       }
 
+      // Tampilkan error ke user
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
         );
       }
     } finally {
+      // Matikan loading indicator
       if (mounted) setState(() => _isLoading = false);
     }
   }
