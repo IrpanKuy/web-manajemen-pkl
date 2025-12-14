@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -25,7 +26,7 @@ class AuthController extends Controller
             ], 401);
         }
         // 3. Generate Token: Jika cocok, buat token Sanctum
-        $user = Auth::user();
+        $user = User::with('siswas.jurusan')->find(Auth::user()->id);
 
         // abaikan saja error
         $token = $user->createToken('auth_token')->plainTextToken; 

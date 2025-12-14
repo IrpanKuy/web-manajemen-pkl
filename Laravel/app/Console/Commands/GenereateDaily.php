@@ -34,7 +34,9 @@ class GenereateDaily extends Command
         //     $this->info('Hari ini adalah akhir pekan. Tidak ada absensi yang dibuat.');
         //     return 0;
         // }
-
+        $now = Carbon::now();
+        $this->line("Current time: {$now->toDateTimeString()}");
+        $this->line("Today: {$today->toDateString()}");
 
         foreach ($pklPlacement as $placement) {
             $tanggalMasuk = Carbon::parse($placement->tgl_mulai);

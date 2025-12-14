@@ -38,6 +38,9 @@ User _$UserFromJson(Map<String, dynamic> json) => User(
       name: json['name'] as String,
       email: json['email'] as String,
       role: json['role'] as String,
+      siswas: json['siswas'] == null
+          ? null
+          : SiswaData.fromJson(json['siswas'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
@@ -45,4 +48,26 @@ Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
       'name': instance.name,
       'email': instance.email,
       'role': instance.role,
+      'siswas': instance.siswas,
+    };
+
+SiswaData _$SiswaDataFromJson(Map<String, dynamic> json) => SiswaData(
+      jurusan: json['jurusan'] == null
+          ? null
+          : JurusanData.fromJson(json['jurusan'] as Map<String, dynamic>),
+    );
+
+Map<String, dynamic> _$SiswaDataToJson(SiswaData instance) => <String, dynamic>{
+      'jurusan': instance.jurusan,
+    };
+
+JurusanData _$JurusanDataFromJson(Map<String, dynamic> json) => JurusanData(
+      id: (json['id'] as num).toInt(),
+      namaJurusan: json['nama_jurusan'] as String,
+    );
+
+Map<String, dynamic> _$JurusanDataToJson(JurusanData instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'nama_jurusan': instance.namaJurusan,
     };

@@ -59,11 +59,14 @@ class User {
   final String role;
   // ⬆️ pengguna: siswa / pendamping / supervisors / pembimbing
 
+  final SiswaData? siswas;
+
   User({
     required this.id,
     required this.name,
     required this.email,
     required this.role,
+    this.siswas,
   });
 
   // convert JSON → User
@@ -71,4 +74,39 @@ class User {
 
   // convert User → JSON
   Map<String, dynamic> toJson() => _$UserToJson(this);
+}
+
+@JsonSerializable()
+class SiswaData {
+  final JurusanData? jurusan;
+
+  SiswaData({
+    this.jurusan,
+  });
+
+  // convert JSON → SiswaData
+  factory SiswaData.fromJson(Map<String, dynamic> json) =>
+      _$SiswaDataFromJson(json);
+
+  // convert SiswaData → JSON
+  Map<String, dynamic> toJson() => _$SiswaDataToJson(this);
+}
+
+@JsonSerializable()
+class JurusanData {
+  final int id;
+  @JsonKey(name: 'nama_jurusan')
+  final String namaJurusan;
+
+  JurusanData({
+    required this.id,
+    required this.namaJurusan,
+  });
+
+  // convert JSON → JurusanData
+  factory JurusanData.fromJson(Map<String, dynamic> json) =>
+      _$JurusanDataFromJson(json);
+
+  // convert JurusanData → JSON
+  Map<String, dynamic> toJson() => _$JurusanDataToJson(this);
 }

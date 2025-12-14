@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Instansi\JurnalHarian;
-use App\Models\PklPlacement;
+use App\Models\Instansi\PklPlacement;
 use App\Models\Siswa\Absensi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class HomePageDataController extends Controller
 {
@@ -17,7 +18,7 @@ class HomePageDataController extends Controller
         
         // Gunakan tanda tanya (?) biar gak error kalau null
         $siswa = $user->siswas; 
-
+        
         // JAGA-JAGA: Kalau user login tapi data siswanya gak ada
         if (!$siswa) {
             return response()->json([
@@ -27,43 +28,49 @@ class HomePageDataController extends Controller
             ], 404);
         }
 
-        $siswaId = $siswa->id;
+        $profileSiswaId = $siswa->id;
 
         // 2. Ambil Data Penempatan
-        $dataPenempatan = PklPlacement::where('siswa_id', $siswaId)
+        $dataPenempatan = PklPlacement::where('profile_siswa_id', $profileSiswaId)
                             ->with(['mitra', 'pembimbing']) 
                             ->first(); 
 
-        // 3. Siapkan Data Default (Jika belum dapat tempat PKL)
-        $namaInstansi = "Belum ditempatkan";
-        $namaPembimbing = "Belum ada";
-
-        // Jika data penempatan ADA, baru isi variabelnya
-        if ($dataPenempatan) {
-            $namaInstansi = $dataPenempatan->mitra->nama_instansi ?? "Data Mitra Terhapus";
-            $namaPembimbing = $dataPenempatan->pembimbing->name ?? "Belum ditentukan";
-        }
-
         // 4. Data Absensi & Jurnal 
         $today = Carbon::now()->format('Y-m-d');
+        $tglMasukPkl = $dataPenempatan->tgl_mulai ?? "Tanggal masuk PKL belum ditentukan";
+        $tglSelesaiPkl = $dataPenempatan->tgl_selesai ?? "Tanggal selesai PKL belum ditentukan";
         
-        $absensiHarian = Absensi::where('siswa_id', $siswaId)
+        $absensiHarian = Absensi::where('profile_siswa_id', $profileSiswaId)
                             ->whereDate('tanggal', $today) 
                             ->first(); 
-
-        $jurnalHarian = JurnalHarian::where('siswa_id', $siswaId)
+        $jurnalHarian = JurnalHarian::where('profile_siswa_id', $profileSiswaId)
                             ->whereDate('tanggal', $today)
                             ->first(); 
+        $statusAbsensi = '';
 
+        if(!$absensiHarian){
+            return response()->json([
+                'success' => false,
+                'message' => 'Absensi tidak ditemukan.',
+                'today' => $today,
+                'data' => null
+            ], 404);
+        }
+        // cek absensi
+        if ($absensiHarian->jam_masuk === null) {
+            $statusAbsensi = 'absenMasuk';
+        }elseif ($absensiHarian->jam_pulang === null && $jurnalHarian === null) {
+            $statusAbsensi = 'buatJurnal';
+        }else {
+            $statusAbsensi = 'absenPulang';
+        };
+        
         return response()->json([
             'success' => true,
             'message' => 'Data berhasil diambil',
+            'statusAbsensi' => $statusAbsensi,
             'data' => [
-                'penempatan' => [
-                    'status' => $dataPenempatan ? true : false,
-                    'nama_instansi' => $namaInstansi,
-                    'pembimbing' => $namaPembimbing,
-                ],
+                'penempatan' => $dataPenempatan,
                 'absensi' => $absensiHarian, 
                 'jurnal' => $jurnalHarian
             ]

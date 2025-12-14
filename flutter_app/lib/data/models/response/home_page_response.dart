@@ -6,11 +6,13 @@ part 'home_page_response.g.dart';
 class HomePageResponse {
   final bool success;
   final String message;
+  final String statusAbsensi;
   final HomePageData? data;
 
   HomePageResponse({
     required this.success,
     required this.message,
+    required this.statusAbsensi,
     this.data,
   });
 
@@ -40,15 +42,20 @@ class HomePageData {
 
 @JsonSerializable()
 class PenempatanData {
-  final bool status;
-  @JsonKey(name: 'nama_instansi')
-  final String? namaInstansi;
+  final String? status;
   final String? pembimbing;
+  @JsonKey(name: 'tgl_mulai')
+  final String? tglMulai;
+  @JsonKey(name: 'tgl_selesai')
+  final String? tglSelesai;
+  final MitraData? mitra;
 
   PenempatanData({
     required this.status,
-    this.namaInstansi,
     this.pembimbing,
+    this.tglMulai,
+    this.tglSelesai,
+    this.mitra,
   });
 
   factory PenempatanData.fromJson(Map<String, dynamic> json) =>
@@ -58,20 +65,30 @@ class PenempatanData {
 }
 
 @JsonSerializable()
+class MitraData {
+  @JsonKey(name: 'nama_instansi')
+  final String? namaInstansi;
+
+  MitraData({
+    required this.namaInstansi,
+  });
+
+  factory MitraData.fromJson(Map<String, dynamic> json) =>
+      _$MitraDataFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MitraDataToJson(this);
+}
+
+@JsonSerializable()
 class AbsensiData {
-  final String? status;
   @JsonKey(name: 'jam_masuk')
   final String? jamMasuk;
   @JsonKey(name: 'jam_pulang')
   final String? jamPulang;
-  @JsonKey(name: 'status_kehadiran')
-  final String? statusKehadiran;
 
   AbsensiData({
-    this.status,
     this.jamMasuk,
     this.jamPulang,
-    this.statusKehadiran,
   });
 
   factory AbsensiData.fromJson(Map<String, dynamic> json) =>

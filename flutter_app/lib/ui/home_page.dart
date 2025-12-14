@@ -16,7 +16,7 @@ class _HomePageState extends State<HomePage> {
   User? _currentUser;
   final HomePageClient _homePageClient = HomePageClient(DioClient().dio);
   HomePageResponse? _homePageResponse;
-
+  PenempatanData? _penempatanData;
   bool _isLoading = false;
 
   final SessionService _sessionService = SessionService();
@@ -44,8 +44,10 @@ class _HomePageState extends State<HomePage> {
       final response = await _homePageClient.getHomePageData();
       setState(() {
         _homePageResponse = response;
+        _penempatanData = response.data?.penempatan;
         _isLoading = false;
       });
+      print(_homePageResponse);
     } catch (e) {
       print(e);
     }
@@ -88,7 +90,11 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(height: 24),
 
                   // --- Kartu Utama ---
-                  _buildActivityCard(),
+                  // _tidakAdaDataPenempatan(),
+                  // _statusPendingPkl(),
+                  _statusBerjalanPkl(),
+                  // _statusSelesaiPkl(),
+                  // _statusGagalPkl(),
 
                   const SizedBox(height: 24),
 
@@ -153,9 +159,9 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    "XII RPL 1 - SMKN 1 Jakarta",
-                    style: TextStyle(
+                  Text(
+                    "${_currentUser?.siswas?.jurusan?.namaJurusan ?? 'Kelas'} - SMK Muhammadiyah 1 Pandaan",
+                    style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 14,
                     ),
@@ -169,9 +175,11 @@ class _HomePageState extends State<HomePage> {
         // Tombol Pill (Lokasi & Pembimbing)
         Row(
           children: [
-            _buildPillBadge(Icons.location_on, "PT Inovasi Teknologi"),
+            _buildPillBadge(Icons.location_on,
+                _penempatanData?.mitra?.namaInstansi ?? "none"),
             const SizedBox(width: 10),
-            _buildPillBadge(Icons.people, "Pembimbing: Pak Budi"),
+            _buildPillBadge(Icons.people,
+                "Pembimbing: ${_penempatanData?.pembimbing ?? "none"}"),
           ],
         ),
       ],
@@ -179,7 +187,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   // WIDGET: Kartu Aktivitas Hari Ini
-  Widget _buildActivityCard() {
+  Widget _statusBerjalanPkl() {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
