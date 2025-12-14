@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/core/api/dio_client.dart';
 import 'package:flutter_app/core/api/client/auth_client.dart';
 import 'package:flutter_app/data/models/request/login_request.dart';
-import 'package:flutter_app/data/storage/token_storage.dart';
+import 'package:flutter_app/services/session_service.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -18,7 +18,7 @@ class _LoginState extends State<Login> {
   final TextEditingController _passwordController = TextEditingController();
 
   late AuthClient _client;
-  final TokenStorage _tokenStorage = TokenStorage();
+
   bool _isLoading = false;
 
 // State untuk toggle lihat/tutup password
@@ -49,23 +49,30 @@ class _LoginState extends State<Login> {
       // Kirim request login ke server
       final response = await _client.login(request);
 
-      // Ambil token dari response (null jika gagal login)
-      final token = response.data?.token;
-
-      // Cek apakah widget masih aktif (anti error setState setelah dispose)
       if (mounted) {
-        if (token != null) {
-          // Simpan token ke storage (SharedPreferences)
-          await _tokenStorage.saveToken(token);
+        // 2. Cek apakah backend bilang sukses?
+        if (response.success && response.data != null) {
+          // 3. Ambil Token & User dari dalam "data"
+          final token = response.data!.token;
+          final user = response.data!.user;
 
-          // Notifikasi sukses
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Login Berhasil!')),
-          );
+          if (token != null && user != null) {
+            // 4. Simpan ke Storage masing-masing
+            await SessionService().saveSession(token, user);
+            if (!mounted) return;
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Selamat Datang, ${user.name}!')),
+            );
+
+            // 5. Pindah ke Home
+            Navigator.of(context).pushReplacementNamed('/home');
+          }
         } else {
-          // Response OK tapi token kosong → gagal login
+          // Jika success: false atau data kosong
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Login gagal!')),
+            SnackBar(
+                content: Text(response.message), backgroundColor: Colors.red),
           );
         }
       }

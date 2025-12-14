@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_app/core/network/auth_interceptor.dart';
 import 'package:logger/logger.dart';
 import '../constants/api_constans.dart';
 
@@ -7,17 +8,18 @@ class DioClient {
   final Logger _logger = Logger();
 
   DioClient()
-    : _dio = Dio(
-        BaseOptions(
-          baseUrl: ApiConstants.baseUrl,
-          connectTimeout: const Duration(seconds: 15),
-          receiveTimeout: const Duration(seconds: 15),
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        ),
-      ) {
+      : _dio = Dio(
+          BaseOptions(
+            baseUrl: ApiConstants.baseUrl,
+            connectTimeout: const Duration(seconds: 15),
+            receiveTimeout: const Duration(seconds: 15),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          ),
+        ) {
+    _dio.interceptors.add(AuthInterceptor());
     // Menambahkan Interceptor untuk logging request/response
     _dio.interceptors.add(
       InterceptorsWrapper(

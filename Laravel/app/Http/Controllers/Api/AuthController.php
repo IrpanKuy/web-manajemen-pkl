@@ -26,8 +26,9 @@ class AuthController extends Controller
         }
         // 3. Generate Token: Jika cocok, buat token Sanctum
         $user = Auth::user();
-        // 'auth_token' adalah nama token yang kita berikan
-        $token = $user->createToken('auth_token')->plainTextToken;
+
+        // abaikan saja error
+        $token = $user->createToken('auth_token')->plainTextToken; 
         // 4. Return Response: Kirim JSON berisi token dan data user ke Flutter
         return response()->json([
             'success' => true,
