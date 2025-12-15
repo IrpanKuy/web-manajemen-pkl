@@ -17,17 +17,23 @@ class MitraController extends Controller
         $user = Auth::user();
         
         // Ensure user is a student
-        if (!$user->siswa) {
+        if (!$user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized. User is not a student.'
             ], 403);
         }
 
-        $jurusanId = $user->siswa->jurusan_id;
+        $jurusanId = $user->siswas->jurusan->id;
 
         // Query Mitra
         $query = MitraIndustri::with('alamat');
+
+        // return response()->json([
+        //     'success' => true,
+        //     'message' => 'Data mitra diambil.',
+        //     'data' => $query->get()
+        // ]);
 
         // Filter by Jurusan
         // jurusan_ids is a JSON array in DB, e.g., ["1", "2"]
@@ -35,7 +41,7 @@ class MitraController extends Controller
         // For compatibility and simplicity if json search fails, usually LIKE '%"ID"%' works for json arrays stored as text.
         // But Laravel 'whereJsonContains' is best.
         if ($jurusanId) {
-            $query->whereJsonContains('jurusan_ids', (string)$jurusanId);
+            $query->whereJsonContains('jurusan_ids', $jurusanId);
         }
 
         // Optional: Search by Name (Local filter in App, but backend search is efficient)

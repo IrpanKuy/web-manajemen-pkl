@@ -8,7 +8,6 @@ import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 import 'package:dio/dio.dart'; // Import Dio for errors
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_app/data/models/request/absensi_request.dart';
-import 'package:flutter_app/data/models/response/absensi_response.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,6 +22,7 @@ class _HomePageState extends State<HomePage> {
   HomePageResponse? _homePageResponse;
   PenempatanData? _penempatanData;
   bool _isLoading = false;
+  bool _hasPklPlacement = false;
 
   final SessionService _sessionService = SessionService();
 
@@ -60,6 +60,9 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _homePageResponse = response;
         _penempatanData = response.data?.penempatan;
+        if (_penempatanData != null) {
+          _hasPklPlacement = true;
+        }
       });
     } catch (e) {
       print("Error loading home data: $e");
@@ -729,8 +732,12 @@ class _HomePageState extends State<HomePage> {
             "Rekap Jurnal", Icons.book_outlined, Colors.blue, '/rekap_jurnal'),
         _buildMenuItem("Rekap Absensi", Icons.access_time, Colors.orange,
             '/rekap_absensi'),
-        _buildMenuItem(
-            "Info Tempat", Icons.business, Colors.purple, '/detail_instansi'),
+        if (_hasPklPlacement)
+          _buildMenuItem(
+              "Info Tempat", Icons.business, Colors.purple, '/detail_mitra')
+        else
+          _buildMenuItem("Info Tempat", Icons.business, Colors.purple,
+              '/pencarian_instansi'),
         _buildMenuItem("Ganti Pembimbing", Icons.people_outline, Colors.red,
             '/ganti_pembimbing'),
       ],
