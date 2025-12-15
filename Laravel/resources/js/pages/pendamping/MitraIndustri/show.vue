@@ -72,6 +72,12 @@ watch(
                 title: flash.error,
             });
         }
+        if (flash?.download_qr_id) {
+            window.open(
+                route("mitra-industri.download-qr", flash.download_qr_id),
+                "_blank"
+            );
+        }
     },
     { immediate: true }
 );

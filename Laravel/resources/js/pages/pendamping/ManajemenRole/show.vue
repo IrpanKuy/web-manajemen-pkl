@@ -35,6 +35,12 @@ const filterRoleOptions = [
     { value: "pembimbing", name: "pembimbing" },
 ];
 
+const roleOptions = [
+    { value: "pendamping", name: "Pendamping" },
+    { value: "supervisors", name: "Supervisors" },
+    { value: "pembimbing", name: "pembimbing" },
+];
+
 const filteredItems = computed(() => {
     let data = props.users.data;
     if (filterRole.value) {
@@ -262,6 +268,8 @@ const deleteItem = (id) => {
                                 <v-select
                                     v-model="form.role"
                                     :items="roleOptions"
+                                    item-title="name"
+                                    item-value="value"
                                     label="Pilih Role"
                                     variant="outlined"
                                     density="compact"

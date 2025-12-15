@@ -1,3 +1,5 @@
+import 'package:flutter_app/data/models/request/absensi_request.dart';
+import 'package:flutter_app/data/models/response/absensi_response.dart';
 import 'package:flutter_app/data/models/response/home_page_response.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:dio/dio.dart';
@@ -10,4 +12,7 @@ abstract class HomePageClient {
 
   @GET("/homepage-data")
   Future<HomePageResponse> getHomePageData();
+
+  @POST("/absensi/scan")
+  Future<AbsensiResponse> postAbsensi(@Body() AbsensiRequest body);
 }

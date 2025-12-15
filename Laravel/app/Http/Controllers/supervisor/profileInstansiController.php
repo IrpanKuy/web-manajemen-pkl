@@ -8,6 +8,8 @@ use App\Models\Pendamping\Jurusan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Barryvdh\DomPDF\Facade\Pdf;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class profileInstansiController extends Controller
 {
@@ -101,5 +103,25 @@ class profileInstansiController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function downloadQrCode()
+    {
+        $id = Auth::user()->id;
+        $mitra = MitraIndustri::where('supervisors_id', $id)->firstOrFail();
+        
+        // Pastikan qr_value ada
+        if (!$mitra->qr_value) {
+            $mitra->qr_value = (string) \Illuminate\Support\Str::uuid();
+            $mitra->save();
+        }
+
+        // Generate QR Code
+        $qrCode = base64_encode(QrCode::format('svg')->size(300)->generate($mitra->qr_value));
+
+        // Load View PDF
+        $pdf = Pdf::loadView('pdf.qrcode', compact('mitra', 'qrCode'));
+
+        return $pdf->download('QR_Code_' . str_replace(' ', '_', $mitra->nama_instansi) . '.pdf');
     }
 }

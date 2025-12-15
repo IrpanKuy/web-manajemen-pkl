@@ -4,6 +4,11 @@ import 'package:flutter_app/core/api/dio_client.dart';
 import 'package:flutter_app/data/models/response/auth_response.dart';
 import 'package:flutter_app/data/models/response/home_page_response.dart';
 import 'package:flutter_app/services/session_service.dart';
+import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
+import 'package:dio/dio.dart'; // Import Dio for errors
+import 'package:geolocator/geolocator.dart';
+import 'package:flutter_app/data/models/request/absensi_request.dart';
+import 'package:flutter_app/data/models/response/absensi_response.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,22 +19,32 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   User? _currentUser;
-  final HomePageClient _homePageClient = HomePageClient(DioClient().dio);
+  late HomePageClient _homePageClient;
   HomePageResponse? _homePageResponse;
   PenempatanData? _penempatanData;
   bool _isLoading = false;
 
   final SessionService _sessionService = SessionService();
 
+  // --- Dummy State untuk Simulasi (Jika API belum siap sepenuhnya) ---
+  // String _statusPkl = 'berjalan'; // 'belum', 'pending', 'berjalan', 'selesai'
+
   @override
   void initState() {
     super.initState();
-    _isLoading = true;
-    _loadCurrentUser();
-    _loadHomePageData();
-    // _homePageClient = HomPageClient(DioClient().dio);
+    _homePageClient = HomePageClient(DioClient().dio);
+    _loadData();
+  }
 
-    // final HomePageResponse = _homePageClient.getHomePageData();
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await _loadCurrentUser();
+    await _loadHomePageData();
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Future<void> _loadCurrentUser() async {
@@ -45,122 +60,277 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _homePageResponse = response;
         _penempatanData = response.data?.penempatan;
-        _isLoading = false;
       });
-      print(_homePageResponse);
     } catch (e) {
-      print(e);
+      print("Error loading home data: $e");
+      // Fallback/Error handling here
     }
+  }
+
+  // --- Logic Action ---
+  Future<void> _handleAbsenMasuk() async {
+    // 1. Cek & Request Permission Lokasi
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      _showErrorDialog("Layanan lokasi tidak aktif. Mohon aktifkan GPS Anda.");
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        _showErrorDialog("Izin lokasi ditolak.");
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      _showErrorDialog(
+          "Izin lokasi ditolak secara permanen. Mohon ubah pengaturan.");
+      return;
+    }
+
+    // 2. Ambil Lokasi
+    _showLoadingDialog(); // Loading saat ambil lokasi
+    Position? position;
+    try {
+      position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      Navigator.pop(context); // Tutup loading lokasi
+    } catch (e) {
+      Navigator.pop(context);
+      _showErrorDialog("Gagal mengambil lokasi: $e");
+      return;
+    }
+
+    // 3. Scan QR Code
+    try {
+      var res = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const SimpleBarcodeScannerPage(
+              isShowFlashIcon: true,
+            ),
+          ));
+
+      if (res is String && res != '-1' && res.isNotEmpty) {
+        // Tampilkan loading dialog kirim data
+        _showLoadingDialog();
+
+        try {
+          // Kirim ke API dengan Data Lokasi Real
+          var response = await _homePageClient.postAbsensi(
+            AbsensiRequest(
+              qrValue: res,
+              latitude: position.latitude,
+              longitude: position.longitude,
+            ),
+          );
+
+          Navigator.pop(context); // Tutup loading
+          _showSuccessDialog(response.message);
+          _loadHomePageData(); // Reload data
+        } catch (e) {
+          Navigator.pop(context); // Tutup loading
+          String errorMessage = "Gagal melakukan absensi.";
+          if (e is DioException) {
+            errorMessage = e.response?.data['message'] ?? errorMessage;
+          }
+          _showErrorDialog(errorMessage);
+        }
+      }
+    } catch (e) {
+      print("Error scanning: $e");
+    }
+  }
+
+  Future<void> _handleIsiJurnal() async {
+    // Navigasi ke halaman isi jurnal
+    // Navigator.pushNamed(context, '/isi_jurnal'); // Contoh
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Fitur Isi Jurnal diklik")),
+    );
+  }
+
+  Future<void> _handleAbsenKeluar() async {
+    // Logic absen keluar (mungkin scan QR juga atau tombol langsung)
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Fitur Absen Keluar diklik")),
+    );
+  }
+
+  // --- Helper Dialogs ---
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  void _showSuccessDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Berhasil"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Gagal"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          )
+        ],
+      ),
+    );
+  }
+
+  // --- Getters untuk Status Logic ---
+  // Mapping status dari API ke Logic UI
+  String get _currentStatus {
+    // Jika data penempatan null -> 'belum'
+    if (_penempatanData == null || _penempatanData?.mitra == null) {
+      return 'belum';
+    }
+
+    // Cek status string dari backend (sesuaikan dengan actual response)
+    // Asumsi return: 'pending', 'approved', 'active', 'finished'
+    // Menggunakan dummy logic berdasarkan 'status' string yg ada
+    String? statusBackend = _penempatanData?.status?.toLowerCase();
+
+    if (statusBackend == 'pengajuan' || statusBackend == 'pending') {
+      return 'pending';
+    } else if (statusBackend == 'disetujui' ||
+        statusBackend == 'berjalan' ||
+        statusBackend == 'active') {
+      return 'berjalan';
+    } else if (statusBackend == 'selesai') {
+      return 'selesai';
+    }
+
+    // Default
+    return 'belum';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6), // Warna background abu-abu muda
-      body: SingleChildScrollView(
-        // Biar background biru mentok atas (hilangkan padding bawaan OS)
-        physics: const ClampingScrollPhysics(),
-
-        child: Stack(
-          children: [
-            // 2. Background Biru (Sekarang ada di dalam ScrollView)
-            Container(
-              height: 300, // Berikan tinggi tetap (atau 35% layar)
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                color: Color(0xFF1E3A8A),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
-                ),
-              ),
-            ),
-
-            // 3. Konten (Header, Card, dll)
-            // Gunakan SafeArea di sini atau Padding manual agar tidak ketutup status bar
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  20, 50, 20, 20), // Top 50 biar aman dari poni HP
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: const Color(0xFFF3F4F6),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Stack(
                 children: [
-                  // --- Header Profil ---
-                  _buildHeaderProfile(),
-
-                  const SizedBox(height: 24),
-
-                  // --- Kartu Utama ---
-                  // _tidakAdaDataPenempatan(),
-                  // _statusPendingPkl(),
-                  _statusBerjalanPkl(),
-                  // _statusSelesaiPkl(),
-                  // _statusGagalPkl(),
-
-                  const SizedBox(height: 24),
-
-                  // --- Menu Grid ---
-                  _buildGridMenu(),
-
-                  const Text(
-                    "STATISTIK PKL",
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                  // 1. Background Header
+                  Container(
+                    height: 320,
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF4A60AA), // Primary Blue
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(40),
+                        bottomRight: Radius.circular(40),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  _buildStatCard(),
 
-                  const SizedBox(height: 30),
-                  // ... dst
+                  // 2. Konten Utama
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 60, 24, 30),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // --- HEADER SECTION ---
+                        _buildHeaderProfile(),
+
+                        const SizedBox(height: 30),
+
+                        // --- MIDDLE SECTION (Dynamic Card) ---
+                        _buildDynamicStatusCard(),
+
+                        const SizedBox(height: 30),
+
+                        // --- BOTTOM SECTION (Menu Grid) ---
+                        const Text(
+                          "Menu Cepat",
+                          style: TextStyle(
+                            color: Colors.black54,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildGridMenu(),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 
-// --- Statistik ---
+  // ==================== WIDGETS ====================
 
-  // WIDGET: Header Profil (Foto, Nama, Lokasi)
+  // 1. HEADER PROFILE
   Widget _buildHeaderProfile() {
+    bool hasPlacement = _currentStatus != 'belum';
+
     return Column(
       children: [
         Row(
           children: [
-            // Foto Profil
+            // Avatar
             Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
+                border: Border.all(color: Colors.white, width: 3),
               ),
               // child: const CircleAvatar(
-              //   radius: 28,
-              //   backgroundImage: NetworkImage(
-              //       'https://i.pravatar.cc/150?img=5'), // Placeholder image
-              //   // Jika pakai aset lokal: AssetImage('assets/profile.png')
+              //   radius: 32,
+              //   backgroundImage:
+              //       NetworkImage('https://i.pravatar.cc/300'), // Dummy
+              //   // child: Icon(Icons.person, size: 30),
               // ),
             ),
             const SizedBox(width: 16),
-            // Teks Nama & Kelas
+            // Nama & Jurusan
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Halo, ${_currentUser?.name ?? 'Pengguna'}",
+                    "Halo, ${_currentUser?.name ?? 'Siswa'}",
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "${_currentUser?.siswas?.jurusan?.namaJurusan ?? 'Kelas'} - SMK Muhammadiyah 1 Pandaan",
+                    _currentUser?.siswas?.jurusan?.namaJurusan ?? "Jurusan ...",
                     style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 14,
@@ -171,97 +341,126 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-        const SizedBox(height: 20),
-        // Tombol Pill (Lokasi & Pembimbing)
-        Row(
-          children: [
-            _buildPillBadge(Icons.location_on,
-                _penempatanData?.mitra?.namaInstansi ?? "none"),
-            const SizedBox(width: 10),
-            _buildPillBadge(Icons.people,
-                "Pembimbing: ${_penempatanData?.pembimbing ?? "none"}"),
-          ],
-        ),
+
+        // Badges (Hanya muncul jika sudah ada penempatan)
+        if (hasPlacement) ...[
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              _buildPillBadge(
+                Icons.location_on,
+                _penempatanData?.mitra?.namaInstansi ?? "Lokasi Unknown",
+              ),
+              const SizedBox(width: 10),
+              _buildPillBadge(
+                Icons.person,
+                _penempatanData?.pembimbing ?? "Pembimbing Unknown",
+              ),
+            ],
+          ),
+        ]
       ],
     );
   }
 
-  // WIDGET: Kartu Aktivitas Hari Ini
-  Widget _statusBerjalanPkl() {
+  Widget _buildPillBadge(IconData icon, String text) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withOpacity(0.2)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: 16),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 2. DYNAMIC STATUS CARD
+  Widget _buildDynamicStatusCard() {
+    switch (_currentStatus) {
+      case 'belum':
+        return _buildNoPlacementCard();
+      case 'pending':
+        return _buildPendingCard();
+      case 'berjalan':
+        return _buildActiveDashboardCard();
+      case 'selesai':
+        return _buildFinishedCard();
+      default:
+        return _buildNoPlacementCard();
+    }
+  }
+
+  // KONDISI A: Belum Memilih Tempat
+  Widget _buildNoPlacementCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 5))
         ],
       ),
       child: Column(
         children: [
-          // Judul & Tanggal
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "Aktivitas Hari Ini",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEBEBFF),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  "Selasa, 24 Okt",
-                  style: TextStyle(
-                    color: Color(0xFF4C4DDC),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1), shape: BoxShape.circle),
+            child:
+                const Icon(Icons.search_rounded, size: 40, color: Colors.blue),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            "Kamu belum memiliki tempat PKL",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "Segera cari dan ajukan diri ke perusahaan pavoritmu sekarang!",
+            style: TextStyle(color: Colors.grey),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
-          // Icon Status (Masuk, Jurnal, Keluar)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStatusItem(Icons.check, Colors.green, "Absen Masuk", true),
-              _buildStatusItem(Icons.edit, Colors.amber, "Jurnal", true),
-              _buildStatusItem(
-                  Icons.exit_to_app, Colors.grey, "Absen Keluar", false),
-            ],
-          ),
-          const SizedBox(height: 24),
-          // Tombol Kuning Besar
           SizedBox(
             width: double.infinity,
-            height: 50,
-            child: ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.edit_square, color: Colors.black87),
-              label: const Text(
-                "Isi Jurnal Harian",
-                style: TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16),
-              ),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/cari_instansi');
+              },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFFD600), // Warna Kuning
+                backgroundColor: const Color(0xFF4A60AA),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                elevation: 0,
+                    borderRadius: BorderRadius.circular(16)),
               ),
+              child: const Text("Pilih Tempat PKL",
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -269,7 +468,254 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // WIDGET: Grid Menu 4 Kotak
+  // KONDISI B: Pending (Menunggu Tanggal Masuk)
+  Widget _buildPendingCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 5))
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.calendar_month, color: Color(0xFF4A60AA)),
+              SizedBox(width: 8),
+              Text("Menunggu Tanggal Masuk",
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF4A60AA))),
+            ],
+          ),
+          const Divider(height: 30),
+          const Text("Tanggal Masuk PKL", style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 4),
+          Text(
+            _penempatanData?.tglMulai ?? "DD MMM YYYY",
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 20),
+          // Simple Countdown placeholder
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF4E5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Column(
+              children: [
+                Text("Waktu Tersisa",
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.orange,
+                        fontWeight: FontWeight.bold)),
+                SizedBox(height: 4),
+                Text("5 Hari Lagi",
+                    style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.orange,
+                        fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // KONDISI C: Berjalan (Dashboard Harian)
+  Widget _buildActiveDashboardCard() {
+    // Cek status absensi hari ini dari response
+    String? statusAbsensi = _homePageResponse
+        ?.statusAbsensi; // 'absenMasuk', 'buatJurnal', 'absenPulang'
+
+    // Default behavior buttons
+    bool enableAbsenMasuk = statusAbsensi == 'absenMasuk';
+    bool enableJurnal = statusAbsensi == 'buatJurnal';
+    bool enableAbsenPulang = statusAbsensi == 'absenPulang';
+
+    // Override sementara jika logic backend beda
+    // enableAbsenMasuk = true; // Uncomment for test scan
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 5))
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Aktivitas Hari Ini",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                    color: Colors.green[50],
+                    borderRadius: BorderRadius.circular(20)),
+                child: const Text("Aktif",
+                    style: TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // 1. Absen Masuk
+              _buildActionButton(
+                label: "Absen Masuk",
+                icon: Icons.qr_code_scanner,
+                color: const Color(0xFF4A60AA),
+                onTap: _handleAbsenMasuk,
+                isActive: enableAbsenMasuk,
+              ),
+              // 2. Isi Jurnal
+              _buildActionButton(
+                label: "Isi Jurnal",
+                icon: Icons.edit_note,
+                color: Colors.orange,
+                onTap: _handleIsiJurnal,
+                isActive: enableJurnal,
+                // Jurnal usually flexible
+              ),
+              // 3. Absen Keluar
+              _buildActionButton(
+                label: "Absen Keluar",
+                icon: Icons.exit_to_app,
+                color: Colors.red,
+                onTap: _handleAbsenKeluar,
+                isActive: enableAbsenPulang,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+    required bool isActive,
+  }) {
+    return InkWell(
+      onTap: isActive ? onTap : null,
+      borderRadius: BorderRadius.circular(16),
+      child: Column(
+        children: [
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              color: isActive ? color.withOpacity(0.1) : Colors.grey[100],
+              borderRadius: BorderRadius.circular(20),
+              border: isActive
+                  ? Border.all(color: color.withOpacity(0.3), width: 1.5)
+                  : null,
+            ),
+            child: Icon(
+              icon,
+              color: isActive ? color : Colors.grey,
+              size: 32,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: isActive ? Colors.black87 : Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // KONDISI D: Selesai (Nilai & Rekap)
+  Widget _buildFinishedCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 5))
+        ],
+      ),
+      child: Column(
+        children: [
+          const Text("PKL Selesai",
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green)),
+          const SizedBox(height: 16),
+          const Text("Nilai Akhir", style: TextStyle(color: Colors.grey)),
+          const Text("95",
+              style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF4A60AA))),
+          const SizedBox(height: 24),
+          const Divider(),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatItem("Hadir", "80"),
+              _buildStatItem("Izin", "2"),
+              _buildStatItem("Alpha", "0"),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value) {
+    return Column(
+      children: [
+        Text(value,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+      ],
+    );
+  }
+
+  // 3. BOTTOM MENU GRID
   Widget _buildGridMenu() {
     return GridView.count(
       shrinkWrap: true,
@@ -277,141 +723,56 @@ class _HomePageState extends State<HomePage> {
       crossAxisCount: 2,
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
-      childAspectRatio: 1.1, // Mengatur rasio lebar:tinggi kartu
+      childAspectRatio: 1.5,
       children: [
-        _buildMenuCard(Icons.book, "Riwayat Jurnal", "Lihat catatanmu",
-            Colors.blue[50]!, Colors.blue),
-        _buildMenuCard(Icons.history, "Riwayat Absensi", "Log kehadiran",
-            Colors.orange[50]!, Colors.orange),
-        _buildMenuCard(Icons.business, "Tempat PKL", "Info perusahaan",
-            Colors.blue[50]!, Colors.blue),
-        _buildMenuCard(Icons.person_pin, "Ganti Pembimbing", "Request baru",
-            Colors.red[50]!, Colors.red),
+        _buildMenuItem(
+            "Rekap Jurnal", Icons.book_outlined, Colors.blue, '/rekap_jurnal'),
+        _buildMenuItem("Rekap Absensi", Icons.access_time, Colors.orange,
+            '/rekap_absensi'),
+        _buildMenuItem(
+            "Info Tempat", Icons.business, Colors.purple, '/detail_instansi'),
+        _buildMenuItem("Ganti Pembimbing", Icons.people_outline, Colors.red,
+            '/ganti_pembimbing'),
       ],
     );
   }
 
-  // WIDGET: Kartu Statistik Bawah
-  Widget _buildStatCard() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.amber[50],
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.calendar_today, color: Colors.brown),
+  Widget _buildMenuItem(
+      String title, IconData icon, Color color, String routeName) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      elevation: 0, // Datar agar lebih clean (optional shadow di parent)
+      child: InkWell(
+        onTap: () {
+          Navigator.pushNamed(context, routeName);
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.withOpacity(0.1)),
+            borderRadius: BorderRadius.circular(20),
           ),
-          const SizedBox(width: 16),
-          const Column(
+          padding: const EdgeInsets.all(16),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("Total Kehadiran",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              Text("Bulan ini",
-                  style: TextStyle(color: Colors.grey, fontSize: 12)),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                    color: color.withOpacity(0.1), shape: BoxShape.circle),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const Spacer(),
+              Text(
+                title,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
             ],
           ),
-          const Spacer(),
-          const Text(
-            "22",
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const Text(" Hari", style: TextStyle(color: Colors.grey)),
-        ],
-      ),
-    );
-  }
-
-  // --- Helper Widgets Kecil ---
-  Widget _buildPillBadge(IconData icon, String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.white, size: 16),
-          const SizedBox(width: 6),
-          Text(
-            text,
-            style: const TextStyle(color: Colors.white, fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Helper: Icon Bulat di dalam Card Aktivitas
-  Widget _buildStatusItem(
-      IconData icon, Color color, String label, bool isActive) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isActive ? color : Colors.grey[200],
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            color: isActive ? Colors.white : Colors.grey,
-          ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: isActive ? Colors.green[700] : Colors.grey,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Helper: Kartu Menu Kotak
-  Widget _buildMenuCard(IconData icon, String title, String subtitle,
-      Color bgIcon, Color colorIcon) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: bgIcon,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: colorIcon),
-          ),
-          const Spacer(),
-          Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
-          ),
-        ],
       ),
     );
   }

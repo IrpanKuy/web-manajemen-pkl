@@ -9,6 +9,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Barryvdh\DomPDF\Facade\Pdf;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class MitraIndustriController extends Controller
 {
@@ -95,7 +97,7 @@ class MitraIndustriController extends Controller
         
             
 
-        DB::transaction(function () use ($request) {
+        $mitra = DB::transaction(function () use ($request) {
             // 1. Simpan Data Mitra
             $mitra = MitraIndustri::create([
                 'pendamping_id' => $request->pendamping_id,
@@ -121,10 +123,13 @@ class MitraIndustriController extends Controller
                 'radius_meter' => $request->radius_meter,
                 'location' => DB::raw("ST_SetSRID(ST_MakePoint({$request->longitude}, {$request->latitude}), 4326)")
             ]);
+
+            return $mitra;
         });
         
         return redirect()->route('mitra-industri.index')
-            ->with('success', 'Mitra Industri berhasil ditambahkan.');
+            ->with('success', 'Mitra Industri berhasil ditambahkan.')
+            ->with('download_qr_id', $mitra->id);
     }
 
     /**
@@ -216,9 +221,28 @@ class MitraIndustriController extends Controller
      * Hapus Mitra (Cascade delete akan menghapus alamat otomatis)
      */
     public function destroy($id)
-{
-    MitraIndustri::findOrFail($id)->delete();
+    {
+        MitraIndustri::findOrFail($id)->delete();
 
-    return redirect()->back()->with('success', 'Mitra Industri dihapus.');
-}
+        return redirect()->back()->with('success', 'Mitra Industri dihapus.');
+    }
+
+    public function downloadQr($id)
+    {
+        $mitra = MitraIndustri::findOrFail($id);
+        
+        // Pastikan qr_value ada, jika tidak generate baru (untuk data lama)
+        if (!$mitra->qr_value) {
+            $mitra->qr_value = (string) \Illuminate\Support\Str::uuid();
+            $mitra->save();
+        }
+
+        // Generate QR Code sebagai Base64 image
+        $qrCode = base64_encode(QrCode::format('svg')->size(300)->generate($mitra->qr_value));
+
+        // Load View PDF
+        $pdf = Pdf::loadView('pdf.qrcode', compact('mitra', 'qrCode'));
+
+        return $pdf->download('QR_Code_' . str_replace(' ', '_', $mitra->nama_instansi) . '.pdf');
+    }
 }

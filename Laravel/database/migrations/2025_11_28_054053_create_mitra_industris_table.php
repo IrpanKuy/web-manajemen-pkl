@@ -23,6 +23,7 @@ return new class extends Migration
         $table->time('jam_masuk');
         $table->time('jam_pulang');
         $table->integer('kuota');
+        $table->string('qr_value')->nullable();
         $table->json('jurusan_ids')->nullable(); // Disimpan sebagai JSON Array
         $table->timestamps();
     });

@@ -57,6 +57,10 @@ const handleResize = () => {
     }
 };
 
+const downloadQrCode = () => {
+    window.open(route("profile-instansi.downloadQrCode"), "_blank");
+};
+
 const currentRouteName = computed(() => page.props.currentRoute.name);
 
 // pengkondisian route
@@ -128,7 +132,20 @@ const isLinkActive = (routeName) => {
                             <slot name="headerTitle" />
                         </div>
                     </div>
-                    <div class="mr-8">not</div>
+                    <!-- Tombol Download QR Code (Khusus Supervisor) -->
+
+                    <div class="mr-8">
+                        not
+                        <div>
+                            <v-btn
+                                color="primary"
+                                prepend-icon="mdi-qrcode-scan"
+                                @click="downloadQrCode"
+                            >
+                                Download QR Code
+                            </v-btn>
+                        </div>
+                    </div>
                 </div>
             </header>
         </transition>

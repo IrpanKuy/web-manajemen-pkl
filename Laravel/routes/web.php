@@ -24,6 +24,7 @@ Route::prefix('pendamping')->middleware(['HasAuth', 'HasPendamping'])->group(fun
     Route::resource('manajemen-role', manajemenRoleController::class);
     Route::resource('jurusan', JurusanController::class);
     Route::resource('data-siswa', DataSiswaController::class);
+    Route::get('/mitra-industri/{id}/download-qr', [MitraIndustriController::class, 'downloadQr'])->name('mitra-industri.download-qr');
 });
 
 // route supervisor
@@ -31,6 +32,7 @@ Route::prefix('supervisors')->middleware(['HasAuth', 'HasSupervisors'])->group(f
     Route::resource('pengajuan-masuk', PengajuanMasukSiswaController::class);
     Route::resource('akun-pembimbing', AkunPembimbingController::class);
     Route::resource('profile-instansi', profileInstansiController::class);
+    Route::get('/download-qrcode', [profileInstansiController::class, 'downloadQrCode'])->name('profile-instansi.downloadQrCode');
 });
 Route::get('/register', function () {
     return Inertia::render('register'); 

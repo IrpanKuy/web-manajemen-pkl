@@ -8,9 +8,16 @@ use App\Models\ProfilePembimbing;
 use App\Models\Siswa\Absensi;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class MitraIndustri extends Model
 {
+    protected static function booted()
+    {
+        static::creating(function ($mitra) {
+            $mitra->qr_value = (string) Str::uuid();
+        });
+    }
     protected $fillable = [
         'nama_instansi',
         'tanggal_masuk',
@@ -24,6 +31,7 @@ class MitraIndustri extends Model
         'jam_masuk',
         'jam_pulang',
         'kuota',
+        'qr_value',
         'jurusan_ids',  // JSON Array
     ];
 
