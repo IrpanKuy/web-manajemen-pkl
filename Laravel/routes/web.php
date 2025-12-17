@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\approval\PengajuanMasukSiswaController;
 use App\Http\Controllers\Instansi\MitraIndustriController;
+use App\Http\Controllers\pembimbing\JurnalSiswaController;
+use App\Http\Controllers\pembimbing\MentorRequestController;
+use App\Http\Controllers\pembimbing\RekapAbsensiController;
 use App\Http\Controllers\pendamping\DataSiswaController;
 use App\Http\Controllers\pendamping\JurusanController;
 use App\Http\Controllers\pendamping\manajemenRoleController;
@@ -34,6 +37,14 @@ Route::prefix('supervisors')->middleware(['HasAuth', 'HasSupervisors'])->group(f
     Route::resource('profile-instansi', profileInstansiController::class);
     Route::get('/download-qrcode', [profileInstansiController::class, 'downloadQrCode'])->name('profile-instansi.downloadQrCode');
 });
+
+// route pembimbing
+Route::prefix('pembimbing')->middleware(['HasAuth', 'HasPembimbing'])->group(function(){
+    Route::resource('jurnal-siswa', JurnalSiswaController::class)->only(['index', 'update']);
+    Route::resource('mentor-request', MentorRequestController::class)->only(['index', 'update']);
+    Route::get('rekap-absensi', [RekapAbsensiController::class, 'index'])->name('rekap-absensi.index');
+});
+
 Route::get('/register', function () {
     return Inertia::render('register'); 
 })->name('register');

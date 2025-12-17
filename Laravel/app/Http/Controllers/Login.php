@@ -27,10 +27,13 @@ class Login extends Controller
                 return redirect()->route('pengajuan-masuk.index');
 
             }
-            elseif (Auth::user()->role == 'supervisors') {
+            elseif (Auth::user()->role == 'pendamping') {
                 return redirect()->route('pendamping.instansi');
 
+            }elseif (Auth::user()->role == 'pembimbing') {
+                return redirect()->route('jurnal-siswa.index');
             }
+            
         }
 
         return redirect()->route('login')->with('error', 'Email Atau Password Salah');

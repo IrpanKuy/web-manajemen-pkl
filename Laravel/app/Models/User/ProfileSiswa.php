@@ -41,4 +41,9 @@ class ProfileSiswa extends Model
     {
         return $this->hasMany(Absensi::class);
     }
+
+    public function jurnalHarians()
+    {
+        return $this->hasMany(\App\Models\Instansi\JurnalHarian::class);
+    }
 }

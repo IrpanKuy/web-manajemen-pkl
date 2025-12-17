@@ -4,6 +4,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\HasAuth;
 use App\Http\Middleware\HasPendamping;
 use App\Http\Middleware\HasSupervisors;
+use App\Http\Middleware\Pembimbing;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -25,7 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'HasAuth' => HasAuth::class,
             'HasPendamping' => HasPendamping::class,
             'HasSupervisors' => HasSupervisors::class,
-            'HasPembimbing' => HasPendamping::class,
+            'HasPembimbing' => Pembimbing::class,
         ]
         );
     })

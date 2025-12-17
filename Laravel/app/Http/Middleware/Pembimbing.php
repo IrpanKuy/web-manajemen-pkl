@@ -16,9 +16,9 @@ class Pembimbing
      */
     public function handle(Request $request, Closure $next): Response
     {
-    //     if (Auth::user()->role == 'pembimbing') {
-    //     return redirect()->back();
-    // }
+        if (Auth::user()->role !== 'pembimbing') {
+            return redirect()->back()->with('error', 'Akses ditolak');
+        }
         return $next($request);
     }
 }
