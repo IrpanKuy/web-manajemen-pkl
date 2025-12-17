@@ -17,7 +17,9 @@ class IzinSeeder extends Seeder
             DB::table('izins')->insert([
                 'profile_siswa_id' => $placement->profile_siswa_id,
                 'mitra_industri_id' => $placement->mitra_industri_id,
-                'durasi_hari' => rand(1, 3),
+                'tgl_mulai' => now()->subDays(rand(10, 30)),
+                'tgl_selesai' => now()->subDays(rand(10, 30)),
+                'durasi_hari' => 1,
                 'keterangan' => 'Sakit / Keperluan Keluarga',
                 'bukti_path' => 'izin/dokumen_sakit.jpg',
                 'status' => 'approved',

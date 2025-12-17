@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'mitra_model.dart';
+part of 'mitra_response.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator

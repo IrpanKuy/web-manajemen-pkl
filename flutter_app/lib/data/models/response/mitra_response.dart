@@ -1,27 +1,27 @@
 import 'package:json_annotation/json_annotation.dart';
 
-part 'mitra_model.g.dart';
+part 'mitra_response.g.dart';
 
 @JsonSerializable()
 class MitraModel {
   @JsonKey(name: 'id')
   final int id;
-  
+
   @JsonKey(name: 'nama_instansi')
   final String namaInstansi;
-  
+
   @JsonKey(name: 'deskripsi')
   final String? deskripsi;
-  
+
   @JsonKey(name: 'bidang_usaha')
   final String? bidangUsaha;
-  
+
   @JsonKey(name: 'kuota')
   final int? kuota;
-  
+
   @JsonKey(name: 'jam_masuk')
   final String? jamMasuk;
-  
+
   @JsonKey(name: 'jam_pulang')
   final String? jamPulang;
 
@@ -49,12 +49,13 @@ class MitraModel {
 class AlamatModel {
   @JsonKey(name: 'detail_alamat')
   final String? detailAlamat;
-  
+
   @JsonKey(name: 'kabupaten')
   final String? kabupaten;
-  
+
   @JsonKey(name: 'location')
-  final String? location; // Assuming Point(lat, lng) returned as string or we parse it
+  final String?
+      location; // Assuming Point(lat, lng) returned as string or we parse it
 
   AlamatModel({
     this.detailAlamat,
@@ -88,7 +89,8 @@ class MitraDetailResponse {
   final String message;
   final MitraModel? data;
 
-  MitraDetailResponse({required this.success, required this.message, this.data});
+  MitraDetailResponse(
+      {required this.success, required this.message, this.data});
 
   factory MitraDetailResponse.fromJson(Map<String, dynamic> json) =>
       _$MitraDetailResponseFromJson(json);

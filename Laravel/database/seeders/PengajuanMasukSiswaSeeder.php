@@ -19,7 +19,7 @@ class PengajuanMasukSiswaSeeder extends Seeder
             // Sisanya Pending
             
             if ($index < 5) {
-                $status = 'pending';
+                $status = 'diterima';
                 $alasan = null;
             } elseif ($index < 8) {
                 $status = 'pending';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/core/api/client/placement_client.dart';
 import 'package:flutter_app/core/api/dio_client.dart';
-import 'package:flutter_app/data/models/mitra_model.dart';
+import 'package:flutter_app/data/models/response/mitra_response.dart';
 
 class DetailMitra extends StatefulWidget {
   const DetailMitra({super.key});

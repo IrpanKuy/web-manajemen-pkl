@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/ui/lamaran.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_app/core/api/client/pengajuan_client.dart';
-import 'package:flutter_app/data/models/mitra_model.dart';
+import 'package:flutter_app/data/models/response/mitra_response.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 

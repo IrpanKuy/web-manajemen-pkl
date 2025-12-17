@@ -27,32 +27,6 @@ const isLinkActive = (routeName) => {
                 <Icon icon="mdi:company" width="24" />
                 <div>Profile Instansi</div>
             </Link>
-            <Link
-                :href="route('pengajuan-masuk.index')"
-                :class="{
-                    'bg-[#4A60AA]!': isLinkActive('pengajuan-masuk.index'),
-                    'hover:bg-[#2C48A5]! ': !isLinkActive(
-                        'pengajuan-masuk.index'
-                    ),
-                }"
-                class="text-white font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
-            >
-                <Icon icon="mdi:inbox-arrow-down" width="24" />
-                <div>Pengajuan Masuk</div>
-            </Link>
-            <Link
-                :href="route('akun-pembimbing.index')"
-                :class="{
-                    'bg-[#4A60AA]!': isLinkActive('akun-pembimbing.index'),
-                    'hover:bg-[#2C48A5]! ': !isLinkActive(
-                        'akun-pembimbing.index'
-                    ),
-                }"
-                class="text-white font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
-            >
-                <Icon icon="mdi:user-badge-outline" width="24" />
-                <div>Akun Pembimbing</div>
-            </Link>
         </template>
         <template #content>
             <slot />

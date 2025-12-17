@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_app/data/models/mitra_model.dart';
+import 'package:flutter_app/data/models/response/mitra_response.dart';
 import 'package:retrofit/retrofit.dart';
 
 part 'mitra_client.g.dart';
