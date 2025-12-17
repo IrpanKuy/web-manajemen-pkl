@@ -23,14 +23,14 @@ class SessionService {
     ]);
   }
 
+  // --- GET CURRENT USER ---
+  Future<User?> getCurrentUser() async {
+    return _userStorage.getUser();
+  }
+
   // --- CEK APAKAH LOGIN? ---
   Future<bool> isLoggedIn() async {
     final token = await _tokenStorage.readToken();
     return token != null && token.isNotEmpty;
-  }
-
-  // --- GET CURRENT USER ---
-  Future<User?> getCurrentUser() async {
-    return await _userStorage.getUser();
   }
 }

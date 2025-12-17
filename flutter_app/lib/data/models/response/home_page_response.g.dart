@@ -65,10 +65,14 @@ Map<String, dynamic> _$PenempatanDataToJson(PenempatanData instance) =>
 
 MitraData _$MitraDataFromJson(Map<String, dynamic> json) => MitraData(
       namaInstansi: json['nama_instansi'] as String?,
+      jamMasuk: json['jam_masuk'] as String?,
+      jamPulang: json['jam_pulang'] as String?,
     );
 
 Map<String, dynamic> _$MitraDataToJson(MitraData instance) => <String, dynamic>{
       'nama_instansi': instance.namaInstansi,
+      'jam_masuk': instance.jamMasuk,
+      'jam_pulang': instance.jamPulang,
     };
 
 AbsensiData _$AbsensiDataFromJson(Map<String, dynamic> json) => AbsensiData(

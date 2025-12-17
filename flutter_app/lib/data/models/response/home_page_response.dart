@@ -68,9 +68,15 @@ class PenempatanData {
 class MitraData {
   @JsonKey(name: 'nama_instansi')
   final String? namaInstansi;
+  @JsonKey(name: 'jam_masuk')
+  final String? jamMasuk;
+  @JsonKey(name: 'jam_pulang')
+  final String? jamPulang;
 
   MitraData({
     required this.namaInstansi,
+    this.jamMasuk,
+    this.jamPulang,
   });
 
   factory MitraData.fromJson(Map<String, dynamic> json) =>

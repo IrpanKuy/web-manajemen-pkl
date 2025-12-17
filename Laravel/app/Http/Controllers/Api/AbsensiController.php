@@ -115,4 +115,54 @@ class AbsensiController extends Controller
             'distance' => round($distance) . 'm'
         ]);
     }
+    public function history(Request $request)
+    {
+        $user = $request->user();
+        if (!$user->siswas) {
+             return response()->json(['success' => false, 'message' => 'User bukan siswa'], 403);
+        }
+
+        $profileSiswaId = $user->siswas->id;
+
+        $query = Absensi::where('profile_siswa_id', $profileSiswaId);
+
+        if ($request->has('month') && $request->has('year')) {
+            $month = $request->month;
+            $year = $request->year;
+            $query->whereMonth('tanggal', $month)->whereYear('tanggal', $year);
+        }
+
+        $absensis = $query->orderBy('tanggal', 'desc')->get();
+
+        // Calculate Summary
+        // status_kehadiran: 'hadir', 'telat', 'izin', 'sakit', 'alpha', 'pending'
+        $totalHadir = $absensis->where('status_kehadiran', 'hadir')->count();
+        $totalTelat = $absensis->where('status_kehadiran', 'telat')->count();
+        $totalSakit = $absensis->where('status_kehadiran', 'sakit')->count();
+        $totalIzin = $absensis->where('status_kehadiran', 'izin')->count();
+        $totalAlpha = $absensis->where('status_kehadiran', 'alpha')->count();
+
+        // Total hari hadir = Hadir + Telat? Or just Hadir? 
+        // Image shows "Total Hadir 22 Hari" and "Terlambat 3 Kali".
+        // Usually "Terlambat" is also "Hadir" but late.
+        // Assuming 'hadir' in DB means strictly on time, and 'telat' means late.
+        // If so, Total Hadir displayed might be sum of 'hadir' + 'telat'.
+        // Let's return raw counts and let frontend decide, or return a composite.
+        // The image shows "Total Hadir 22 Hari". It's possible this includes 'telat'.
+        // Let's provide breakdown.
+
+        return response()->json([
+            'success' => true,
+            'data' => $absensis,
+            'summary' => [
+                'hadir' => $totalHadir,
+                'telat' => $totalTelat,
+                'sakit' => $totalSakit,
+                'izin' => $totalIzin,
+                'alpha' => $totalAlpha,
+                // Composite for UI convenience, assuming Total Hadir includes Telat
+                'total_hadir_count' => $totalHadir + $totalTelat
+            ]
+        ]);
+    }
 }

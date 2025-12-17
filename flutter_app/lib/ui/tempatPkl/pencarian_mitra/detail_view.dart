@@ -2,10 +2,10 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/foundation.dart'; // Untuk kIsWeb
 import 'package:flutter/material.dart';
+import 'package:flutter_app/ui/lamaran.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_app/core/api/client/pengajuan_client.dart';
 import 'package:flutter_app/data/models/mitra_model.dart';
-import 'package:flutter_app/ui/tempatPkl/status_lamaran.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -261,7 +261,7 @@ class _MitraDetailViewState extends State<MitraDetailView> {
                   const SizedBox(height: 16),
 
                   // 2. Upload CV
-                  const Text("Upload CV (Image)",
+                  const Text("Upload CV (Opsional)",
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                   const SizedBox(height: 8),
@@ -286,7 +286,7 @@ class _MitraDetailViewState extends State<MitraDetailView> {
                                 child: Text(
                               _cvFile != null
                                   ? _cvFile!.path.split('/').last
-                                  : "Pilih File CV (Gambar)...",
+                                  : "Pilih File CV (Opsional)...",
                               style: TextStyle(
                                   color: _cvFile != null
                                       ? Colors.black

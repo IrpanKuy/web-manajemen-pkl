@@ -8,6 +8,7 @@ import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 import 'package:dio/dio.dart'; // Import Dio for errors
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_app/data/models/request/absensi_request.dart';
+import 'package:flutter_app/ui/homePage/card_view.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -207,6 +208,68 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // --- Helper Date & Logout ---
+  String _getFormattedDate() {
+    final now = DateTime.now();
+    // Format simpel: Senin, 16 Des 2025
+    // Bisa pakai intl package, tapi manual dulu biar cepat
+    List<String> days = [
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+      'Minggu'
+    ];
+    List<String> months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des'
+    ];
+    String day = days[now.weekday - 1];
+    String month = months[now.month - 1];
+    return "$day, ${now.day} $month ${now.year}";
+  }
+
+  Future<void> _handleLogout() async {
+    // Show confirmation
+    bool? confirm = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Konfirmasi Logout"),
+        content: const Text("Apakah Anda yakin ingin keluar?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Batal"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child:
+                const Text("Ya, Keluar", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _sessionService.logout();
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    }
+  }
+
   // --- Getters untuk Status Logic ---
   // Mapping status dari API ke Logic UI
   String get _currentStatus {
@@ -303,30 +366,24 @@ class _HomePageState extends State<HomePage> {
       children: [
         Row(
           children: [
-            // Avatar
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 3),
-              ),
-              // child: const CircleAvatar(
-              //   radius: 32,
-              //   backgroundImage:
-              //       NetworkImage('https://i.pravatar.cc/300'), // Dummy
-              //   // child: Icon(Icons.person, size: 30),
-              // ),
-            ),
-            const SizedBox(width: 16),
-            // Nama & Jurusan
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Date & Time (Top Left)
+                  Text(
+                    _getFormattedDate(),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
                   Text(
                     "Halo, ${_currentUser?.name ?? 'Siswa'}",
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 20,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -341,6 +398,14 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
+            ),
+            // Logout Button (Top Right)
+            IconButton(
+              onPressed: () {
+                _handleLogout();
+              },
+              icon: const Icon(Icons.logout, color: Colors.white),
+              tooltip: "Logout",
             ),
           ],
         ),
@@ -539,127 +604,12 @@ class _HomePageState extends State<HomePage> {
 
   // KONDISI C: Berjalan (Dashboard Harian)
   Widget _buildActiveDashboardCard() {
-    // Cek status absensi hari ini dari response
-    String? statusAbsensi = _homePageResponse
-        ?.statusAbsensi; // 'absenMasuk', 'buatJurnal', 'absenPulang'
-
-    // Default behavior buttons
-    bool enableAbsenMasuk = statusAbsensi == 'absenMasuk';
-    bool enableJurnal = statusAbsensi == 'buatJurnal';
-    bool enableAbsenPulang = statusAbsensi == 'absenPulang';
-
-    // Override sementara jika logic backend beda
-    // enableAbsenMasuk = true; // Uncomment for test scan
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 15,
-              offset: const Offset(0, 5))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text("Aktivitas Hari Ini",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                    color: Colors.green[50],
-                    borderRadius: BorderRadius.circular(20)),
-                child: const Text("Aktif",
-                    style: TextStyle(
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // 1. Absen Masuk
-              _buildActionButton(
-                label: "Absen Masuk",
-                icon: Icons.qr_code_scanner,
-                color: const Color(0xFF4A60AA),
-                onTap: _handleAbsenMasuk,
-                isActive: enableAbsenMasuk,
-              ),
-              // 2. Isi Jurnal
-              _buildActionButton(
-                label: "Isi Jurnal",
-                icon: Icons.edit_note,
-                color: Colors.orange,
-                onTap: _handleIsiJurnal,
-                isActive: enableJurnal,
-                // Jurnal usually flexible
-              ),
-              // 3. Absen Keluar
-              _buildActionButton(
-                label: "Absen Keluar",
-                icon: Icons.exit_to_app,
-                color: Colors.red,
-                onTap: _handleAbsenKeluar,
-                isActive: enableAbsenPulang,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required String label,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-    required bool isActive,
-  }) {
-    return InkWell(
-      onTap: isActive ? onTap : null,
-      borderRadius: BorderRadius.circular(16),
-      child: Column(
-        children: [
-          Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              color: isActive ? color.withOpacity(0.1) : Colors.grey[100],
-              borderRadius: BorderRadius.circular(20),
-              border: isActive
-                  ? Border.all(color: color.withOpacity(0.3), width: 1.5)
-                  : null,
-            ),
-            child: Icon(
-              icon,
-              color: isActive ? color : Colors.grey,
-              size: 32,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: isActive ? Colors.black87 : Colors.grey,
-            ),
-          ),
-        ],
-      ),
+    return StatusCard(
+      penempatanData: _penempatanData,
+      statusAbsensi: _homePageResponse?.statusAbsensi,
+      onAbsenMasuk: _handleAbsenMasuk,
+      onIsiJurnal: _handleIsiJurnal,
+      onAbsenPulang: _handleAbsenKeluar,
     );
   }
 
@@ -738,8 +688,11 @@ class _HomePageState extends State<HomePage> {
         else
           _buildMenuItem("Info Tempat", Icons.business, Colors.purple,
               '/pencarian_instansi'),
-        _buildMenuItem("Ganti Pembimbing", Icons.people_outline, Colors.red,
+        _buildMenuItem("Pembimbing", Icons.people_outline, Colors.red,
             '/ganti_pembimbing'),
+        _buildMenuItem("Lamaran", Icons.list, Colors.green, '/lamaran'),
+        _buildMenuItem(
+            "Ajukan Izin", Icons.calendar_today, Colors.cyan, '/ajukan_izin'),
       ],
     );
   }

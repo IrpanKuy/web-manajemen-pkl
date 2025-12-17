@@ -16,7 +16,7 @@ return new class extends Migration
         $table->foreignId('profile_siswa_id')->constrained('profile_siswas')->onDelete('cascade');
         $table->foreignId('mitra_industri_id')->constrained('mitra_industris')->onDelete('cascade');
         $table->integer('durasi');
-        $table->string('cv_path');
+        $table->string('cv_path')->nullable();
         $table->text('deskripsi')->nullable();
         $table->date('tgl_ajuan');
         $table->enum('status', ['pending', 'diterima', 'ditolak'])->default('pending');

@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('profile_siswa_id')->constrained('profile_siswas')->onDelete('cascade');
             $table->foreignId('mitra_industri_id')->constrained('mitra_industris');
+            $table->date('tgl_mulai');
+            $table->date('tgl_selesai');
             $table->integer('durasi_hari');
             $table->text('keterangan');
             $table->string('bukti_path')->nullable();

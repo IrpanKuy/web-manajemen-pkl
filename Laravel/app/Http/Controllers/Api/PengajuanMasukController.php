@@ -23,13 +23,13 @@ class PengajuanMasukController extends Controller
             ], 403);
         }
 
-        $profileSiswa = $user->siswa; // Assuming 'siswa' relation points to ProfileSiswa or similar
+        $profileSiswas = $user->siswas; // Assuming 'siswa' relation points to ProfileSiswa or similar
 
         $validator = Validator::make($request->all(), [
             'mitra_id' => 'required|exists:mitra_industris,id',
             'durasi' => 'required|integer|min:1',
             'deskripsi' => 'required|string',
-            'cv' => 'image|mimes:jpeg,png,jpg,gif|max:2048', // Image as per request
+            'cv' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Image as per request
         ]);
 
         if ($validator->fails()) {
@@ -49,7 +49,7 @@ class PengajuanMasukController extends Controller
 
             // Create Pengajuan
             $pengajuan = PengajuanMasukSiswa::create([
-                'profile_siswa_id' => $profileSiswa->id,
+                'profile_siswa_id' => $profileSiswas->id,
                 'mitra_industri_id' => $request->mitra_id,
                 'durasi' => $request->durasi,
                 'cv_path' => $cvPath,
@@ -79,7 +79,7 @@ class PengajuanMasukController extends Controller
     {
          $user = Auth::user();
 
-        if (!$user || !$user->siswa) {
+        if (!$user) {
              return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized.'
@@ -88,8 +88,8 @@ class PengajuanMasukController extends Controller
         
         // Get latest pengajuan (assuming one active at a time or retrieve list)
         // For simplicity, retrieving the latest one.
-        $pengajuan = PengajuanMasukSiswa::where('profile_siswa_id', $user->siswa->id)
-            ->with('mitraIndustri')
+        $pengajuan = PengajuanMasukSiswa::where('profile_siswa_id', $user->siswas->id)
+            ->with('mitra')
             ->latest()
             ->first();
 
@@ -103,6 +103,31 @@ class PengajuanMasukController extends Controller
         return response()->json([
             'success' => true,
             'data' => $pengajuan
+        ]);
+    }
+
+    /**
+     * Get all application history for the logged-in student
+     */
+    public function getHistory(Request $request)
+    {
+         $user = Auth::user();
+
+        if (!$user) {
+             return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized.'
+            ], 403);
+        }
+
+        $pengajuanList = PengajuanMasukSiswa::where('profile_siswa_id', $user->siswas->id)
+            ->with('mitra')
+            ->orderBy('tgl_ajuan', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $pengajuanList
         ]);
     }
 }

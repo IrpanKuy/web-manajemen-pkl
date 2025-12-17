@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\HomePageDataController;
 use App\Http\Controllers\Api\AbsensiController;
 use App\Http\Controllers\Api\MitraController;
 use App\Http\Controllers\Api\PengajuanMasukController;
+use App\Http\Controllers\Api\PlacementController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -19,5 +20,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/mitra/{id}', [MitraController::class, 'show']);  // Detail Mitra
     
     Route::post('/pengajuan-masuk', [PengajuanMasukController::class, 'store']); // Apply
-    Route::get('/pengajuan-status', [PengajuanMasukController::class, 'getStatus']); // Check Status
+    Route::get('/pengajuan-status', [PengajuanMasukController::class, 'getStatus']); // Latest Status
+    Route::get('/pengajuan-history', [PengajuanMasukController::class, 'getHistory']); // List History
+    
+    Route::get('/placement/detail', [PlacementController::class, 'show']); // Active Placement Detail
+    
+    // History Routes
+    Route::get('/absensi/history', [AbsensiController::class, 'history']);
+    Route::get('/jurnal', [\App\Http\Controllers\Api\JurnalController::class, 'index']);
 });

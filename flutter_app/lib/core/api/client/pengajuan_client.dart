@@ -19,6 +19,9 @@ abstract class PengajuanClient {
 
   @GET("/pengajuan-status")
   Future<StatusLamaranResponse> getStatus();
+
+  @GET("/pengajuan-history")
+  Future<HistoryLamaranResponse> getHistory();
 }
 
 class StatusLamaranResponse {
@@ -32,6 +35,20 @@ class StatusLamaranResponse {
     return StatusLamaranResponse(
       success: json['success'] ?? false,
       data: json['data'],
+    );
+  }
+}
+
+class HistoryLamaranResponse {
+  final bool success;
+  final List<dynamic> data;
+
+  HistoryLamaranResponse({required this.success, required this.data});
+
+  factory HistoryLamaranResponse.fromJson(Map<String, dynamic> json) {
+    return HistoryLamaranResponse(
+      success: json['success'] ?? false,
+      data: json['data'] != null ? List<dynamic>.from(json['data']) : [],
     );
   }
 }
