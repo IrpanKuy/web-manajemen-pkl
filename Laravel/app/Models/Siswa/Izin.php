@@ -13,6 +13,7 @@ class Izin extends Model
         'mitra_industri_id',
         'tgl_mulai',
         'tgl_selesai',
+        'durasi_hari',
         'keterangan',
         'bukti_path',
         'status',

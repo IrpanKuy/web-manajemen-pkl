@@ -692,7 +692,7 @@ class _HomePageState extends State<HomePage> {
             '/ganti_pembimbing'),
         _buildMenuItem("Lamaran", Icons.list, Colors.green, '/lamaran'),
         _buildMenuItem(
-            "Ajukan Izin", Icons.calendar_today, Colors.cyan, '/ajukan_izin'),
+            "Ajukan Izin", Icons.calendar_today, Colors.cyan, '/rekap_izin'),
       ],
     );
   }
