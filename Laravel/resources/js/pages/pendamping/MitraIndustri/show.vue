@@ -42,34 +42,53 @@ const filteredItems = computed(() => {
     return data;
 });
 
-console.log(filteredItems);
-
-// watch([filterPendamping, filterKota], () => {});
 const page = usePage();
 
 const deleteItem = (id) => {
-    router.delete(route("mitra-industri.destroy", id), {
-        preserveScroll: true,
-        preserveState: true,
+    Swal.fire({
+        title: "Hapus Mitra Industri?",
+        text: "Data tidak bisa dikembalikan!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#6b7280",
+        confirmButtonText: "Ya, Hapus",
+        cancelButtonText: "Batal",
+    }).then((result) => {
+        if (result.isConfirmed) {
+            router.delete(route("mitra-industri.destroy", id), {
+                preserveScroll: true,
+                preserveState: true,
+            });
+        }
     });
 };
 
 const editItem = (id) => {
     router.get(route("mitra-industri.edit", id));
 };
+
+const viewDetail = (id) => {
+    router.get(route("mitra-industri.detail", id));
+};
+
 watch(
     () => page.props.flash,
     (flash) => {
         if (flash?.success) {
             Swal.fire({
                 icon: "success",
-                title: flash.success,
+                title: "Berhasil!",
+                text: flash.success,
+                timer: 2000,
+                showConfirmButton: false,
             });
         }
         if (flash?.error) {
             Swal.fire({
                 icon: "error",
-                title: flash.error,
+                title: "Gagal!",
+                text: flash.error,
             });
         }
         if (flash?.download_qr_id) {
@@ -83,93 +102,170 @@ watch(
 );
 
 const headers = [
+    {
+        title: "No",
+        key: "index",
+        align: "center",
+        sortable: false,
+        width: "60px",
+    },
     { title: "Nama Instansi", key: "nama_instansi" },
     { title: "Bidang Usaha", key: "bidang_usaha" },
     { title: "Pendamping", key: "pendamping.name" },
-    { title: "Supervisors", key: "supervisor.name" },
-    { title: "Kuota", key: "kuota" },
+    { title: "Supervisor", key: "supervisor.name" },
+    { title: "Kuota", key: "kuota_info", align: "center" },
     { title: "Lokasi", key: "alamat.kecamatan" },
-    { title: "Aksi", key: "actions", sortable: false, align: "center" },
+    {
+        title: "Aksi",
+        key: "actions",
+        sortable: false,
+        align: "center",
+        width: "180px",
+    },
 ];
 
 const title = [
     {
         title: "Mitra Industri",
         disabled: false,
-        href: "breadcrumbs_dashboard",
-    },
-    {
-        title: "Edit",
-        disabled: true,
-        href: "breadcrumbs_dashboard",
+        href: route("mitra-industri.index"),
     },
 ];
 </script>
 
 <template>
     <PendampingDashboardLayout>
-        <template #headerTitle
-            ><v-breadcrumbs :items="title" class="text-base md:text-xl">
+        <template #headerTitle>
+            <v-breadcrumbs :items="title" class="text-base md:text-xl">
                 <template v-slot:divider>
                     <v-icon icon="mdi-chevron-right"></v-icon>
                 </template>
             </v-breadcrumbs>
         </template>
-        <v-card class="pa-3 z-20! space-y-5! border border-gray-700">
-            <div class="d-flex justify-end align-center">
+
+        <v-card class="pa-4 border border-gray-700" elevation="2" rounded="lg">
+            <v-card-title
+                class="d-flex justify-space-between align-center flex-wrap gap-2"
+            >
+                <h3 class="text-lg md:text-xl font-bold">
+                    Data Mitra Industri
+                </h3>
                 <Link :href="route('mitra-industri.create')">
-                    <v-btn
-                        prepend-icon="mdi:plus"
-                        text="Tambah Mitra Industri"
-                    />
+                    <v-btn color="primary" prepend-icon="mdi-plus">
+                        Tambah Mitra
+                    </v-btn>
                 </Link>
-            </div>
-            <div class="grid! grid-cols-4! gap-3">
+            </v-card-title>
+
+            <!-- FILTER -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 mb-4">
                 <v-text-field
                     v-model="search"
-                    label="Cari Nama Atau Bidang Usaha"
+                    label="Cari Nama / Bidang Usaha"
                     prepend-inner-icon="mdi-magnify"
-                    class="col-span-2"
+                    class="md:col-span-2"
                     variant="outlined"
-                    single-line
+                    density="compact"
+                    clearable
+                    hide-details
                 ></v-text-field>
                 <v-select
                     v-model="filterPendamping"
-                    label="Pilih Pendamping"
+                    label="Filter Pendamping"
                     :items="listPendampingsOptions"
                     item-title="name"
                     item-value="id"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
                 ></v-select>
                 <v-select
                     v-model="filterSupervisors"
-                    label="Pilih Supervisors"
+                    label="Filter Supervisor"
                     :items="listSupervisorsOptions"
                     item-title="name"
                     item-value="id"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
                 ></v-select>
             </div>
+
+            <!-- TABLE -->
             <v-data-table
                 :headers="headers"
                 :items="filteredItems"
                 :search="search"
-                class="border bg-gray-300 z-0!"
+                class="elevation-0 border"
                 hover
             >
-                <template #item.actions="{ item }">
-                    <div class="d-flex ga-2 justify-end">
-                        <v-btn
-                            icon="mdi-pencil"
-                            color="amber"
-                            size="small"
-                            @click="editItem(item.id)"
-                        ></v-btn>
+                <template #item.index="{ index }">
+                    {{ index + 1 }}
+                </template>
 
-                        <v-btn
-                            icon="mdi-delete"
-                            size="small"
-                            color="red"
-                            @click="deleteItem(item.id)"
-                        ></v-btn>
+                <template #item.nama_instansi="{ item }">
+                    <div class="py-2" style="min-width: 150px">
+                        <div class="font-weight-bold">
+                            {{ item.nama_instansi }}
+                        </div>
+                    </div>
+                </template>
+
+                <template #item.bidang_usaha="{ item }">
+                    <v-chip color="indigo" size="small" variant="flat">
+                        {{ item.bidang_usaha }}
+                    </v-chip>
+                </template>
+
+                <template #item.kuota_info="{ item }">
+                    <div class="text-center">
+                        <div class="font-weight-bold">
+                            {{ item.placements_count || 0 }}/{{ item.kuota }}
+                        </div>
+                        <div class="text-caption text-grey">siswa</div>
+                    </div>
+                </template>
+
+                <template #item.actions="{ item }">
+                    <div class="d-flex gap-2 justify-center">
+                        <v-tooltip text="Lihat Detail" location="top">
+                            <template v-slot:activator="{ props }">
+                                <v-btn
+                                    v-bind="props"
+                                    icon="mdi-eye"
+                                    color="primary"
+                                    size="small"
+                                    variant="flat"
+                                    @click="viewDetail(item.id)"
+                                ></v-btn>
+                            </template>
+                        </v-tooltip>
+
+                        <v-tooltip text="Edit" location="top">
+                            <template v-slot:activator="{ props }">
+                                <v-btn
+                                    v-bind="props"
+                                    icon="mdi-pencil"
+                                    color="amber"
+                                    size="small"
+                                    variant="flat"
+                                    @click="editItem(item.id)"
+                                ></v-btn>
+                            </template>
+                        </v-tooltip>
+
+                        <v-tooltip text="Hapus" location="top">
+                            <template v-slot:activator="{ props }">
+                                <v-btn
+                                    v-bind="props"
+                                    icon="mdi-delete"
+                                    size="small"
+                                    color="red"
+                                    variant="flat"
+                                    @click="deleteItem(item.id)"
+                                ></v-btn>
+                            </template>
+                        </v-tooltip>
                     </div>
                 </template>
             </v-data-table>

@@ -22,32 +22,37 @@ const props = defineProps({
     mitra: Object,
     jurusans: Array,
     listPendampings: Array,
-    listSupervisors: Array,
+});
+
+// Initialize lat/lng/radius from props
+onMounted(() => {
+    if (props.mitra.alamat?.latitude) {
+        lat.value = props.mitra.alamat.latitude;
+    }
+    if (props.mitra.alamat?.longitude) {
+        lng.value = props.mitra.alamat.longitude;
+    }
+    if (props.mitra.alamat?.radius_meter) {
+        radius.value = props.mitra.alamat.radius_meter;
+    }
 });
 
 watch(step, async (newValue) => {
-    if (newValue === 2) {
-        // PENTING: Tunggu Vue selesai merender elemen <div id="map">
+    if (newValue === 3) {
         await nextTick();
-
-        // Jalankan init map
         initMap();
     }
 });
 
 const initMap = () => {
-    // 1. Inisialisasi Map
     if (map) return;
-    // Pastikan ID 'map' sesuai dengan id di template
-    map = L.map("map").setView([lat.value, lng.value], 13); // Ganti koordinat sesuai lokasi (contoh: Jombang/Mojokerto)
+    map = L.map("map").setView([lat.value, lng.value], 13);
 
-    // 2. Tambahkan Tile Layer (Peta Dasarnya)
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution:
             '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
 
-    // 3. Tambahkan Marker (Opsional)
     marker = L.marker([lat.value, lng.value], { draggable: true })
         .addTo(map)
         .bindPopup("Lokasi Mitra")
@@ -59,39 +64,33 @@ const initMap = () => {
         fillOpacity: 0.5,
         radius: radius.value,
     }).addTo(map);
+
     marker.on("dragend", (event) => {
         const posisi = event.target.getLatLng();
-
-        // Update variabel reaktif
         lat.value = posisi.lat;
         lng.value = posisi.lng;
 
-        // Update Form Inertia (jika pakai)
         if (typeof form !== "undefined") {
             form.latitude = lat.value;
             form.longitude = lng.value;
         }
 
         circle.setLatLng(posisi);
-
-        console.log("Updated:", posisi);
     });
 };
 
-// A. Jika Lat/Lng berubah (misal user ketik manual di input), update Marker & Circle
 watch([lat, lng], ([newLat, newLng]) => {
     if (map && marker && circle) {
         const newPos = [newLat, newLng];
-        marker.setLatLng(newPos); // Pindah marker
-        circle.setLatLng(newPos); // Pindah lingkaran
-        map.panTo(newPos); // Geser kamera map ke tengah
+        marker.setLatLng(newPos);
+        circle.setLatLng(newPos);
+        map.panTo(newPos);
 
         form.latitude = newLat;
         form.longitude = newLng;
     }
 });
 
-// B. Jika Radius berubah, update ukuran Circle
 watch(radius, (newRadius) => {
     if (circle) {
         circle.setRadius(Number(newRadius));
@@ -101,7 +100,6 @@ watch(radius, (newRadius) => {
 
 const form = useForm({
     pendamping_id: props.mitra.pendamping_id,
-    supervisors_id: props.mitra.supervisors_id,
     nama_instansi: props.mitra.nama_instansi,
     deskripsi: props.mitra.deskripsi,
     bidang_usaha: props.mitra.bidang_usaha,
@@ -111,31 +109,33 @@ const form = useForm({
     jurusan_ids: (() => {
         let ids = props.mitra.jurusan_ids ?? [];
 
-        // Cek apakah data adalah string yang terlihat seperti JSON
         if (
             typeof ids === "string" &&
             ids.startsWith("[") &&
             ids.endsWith("]")
         ) {
             try {
-                // Parse string JSON menjadi array
                 ids = JSON.parse(ids);
             } catch (e) {
                 console.error("Gagal parse jurusan_ids string:", e);
-                ids = []; // Jika gagal, set array kosong
+                ids = [];
             }
         }
 
-        // Pastikan semua elemen di dalamnya adalah angka (integer)
         if (Array.isArray(ids)) {
-            // Konversi elemen menjadi integer, hanya ambil yang valid
             return ids.map((id) => parseInt(id)).filter((id) => !isNaN(id));
         }
 
-        return []; // Jika bukan array, kembalikan array kosong
+        return [];
     })(),
 
     tanggal_masuk: props.mitra.tanggal_masuk ?? "none",
+
+    // Supervisor Data (for editing existing supervisor)
+    supervisor_name: props.mitra.supervisor?.name ?? "",
+    supervisor_email: props.mitra.supervisor?.email ?? "",
+    supervisor_phone: props.mitra.supervisor?.phone ?? "",
+    supervisor_password: "", // Empty for edit, only filled if changing password
 
     // Alamat
     profinsi: props.mitra.alamat?.profinsi ?? "",
@@ -149,8 +149,6 @@ const form = useForm({
 
     radius_meter: props.mitra.alamat?.radius_meter ?? 100,
 });
-
-console.log(form.jurusan_ids);
 
 // kirim ke controller
 const submit = (id) => {
@@ -170,7 +168,6 @@ watch(
 
 const onValidationError = () => {
     console.log("Ada error validasi dari useForm!", form.errors);
-    // Contoh pake SweetAlert:
     Swal.fire({
         icon: "error",
         title: "Gagal terkirim",
@@ -179,43 +176,33 @@ const onValidationError = () => {
 };
 
 Object.keys(form.data()).forEach((field) => {
-    // Kita buat watch untuk setiap field
     watch(
         () => form[field],
         (newVal) => {
-            // Cek: Jika field ini punya error, hapus errornya saat user mengetik
             if (form.errors[field]) {
                 form.clearErrors(field);
             }
-
-            // Opsional: Anda bisa tambahkan logika lain di sini
             console.log(`User mengubah ${field} menjadi ${newVal}`);
         },
         500
     );
 });
-
-console.log(props.mitra.tanggal_masuk);
 </script>
 
 <template>
     <PendampingDashboardLayout>
         <template #headerTitle>
-            <!-- mitra -->
             <Link :href="route('mitra-industri.index')">Mitra Industri</Link>
-
-            <!-- icon -->
             <Icon icon="mdi:keyboard-arrow-right" width="32"></Icon>
-
-            <!-- create -->
-            <!-- <Link :href="route('mitra-industri.edit')">Edit</Link> -->
+            <span>Edit</span>
         </template>
         <form @submit.prevent="submit(props.mitra.id)">
             <v-stepper
                 v-model="step"
                 hide-actions
-                :items="['Data Mitra', 'Alamat Mitra']"
+                :items="['Data Mitra', 'Supervisor', 'Alamat Mitra']"
             >
+                <!-- STEP 1: Data Mitra -->
                 <template #item.1>
                     <v-card flat class="p-3!">
                         <div class="grid! grid-cols-2! md:grid-cols-4! gap-3!">
@@ -247,17 +234,6 @@ console.log(props.mitra.tanggal_masuk);
                                     item-value="id"
                                     :error-messages="form.errors.pendamping_id"
                                     :error="!!form.errors.pendamping_id"
-                                ></v-select>
-                            </div>
-                            <div>
-                                <v-select
-                                    v-model="form.supervisors_id"
-                                    label="Pilih supervisor Mitra"
-                                    :items="listSupervisors"
-                                    item-title="name"
-                                    item-value="id"
-                                    :error-messages="form.errors.supervisors_id"
-                                    :error="!!form.errors.supervisors_id"
                                 ></v-select>
                             </div>
 
@@ -351,7 +327,84 @@ console.log(props.mitra.tanggal_masuk);
                     </v-card>
                 </template>
 
+                <!-- STEP 2: Supervisor (Edit) -->
                 <template #item.2>
+                    <v-card flat class="pa-4">
+                        <h3 class="text-lg font-bold mb-4">
+                            Edit Data Supervisor
+                        </h3>
+
+                        <v-alert type="info" class="mb-4" variant="tonal">
+                            Edit data supervisor mitra. Kosongkan password jika
+                            tidak ingin mengubah.
+                        </v-alert>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <v-text-field
+                                v-model="form.supervisor_name"
+                                label="Nama Supervisor"
+                                variant="outlined"
+                                density="compact"
+                                :error-messages="form.errors.supervisor_name"
+                                :error="!!form.errors.supervisor_name"
+                            ></v-text-field>
+
+                            <v-text-field
+                                v-model="form.supervisor_email"
+                                label="Email Supervisor"
+                                type="email"
+                                variant="outlined"
+                                density="compact"
+                                :error-messages="form.errors.supervisor_email"
+                                :error="!!form.errors.supervisor_email"
+                            ></v-text-field>
+
+                            <v-text-field
+                                v-model="form.supervisor_phone"
+                                label="No HP Supervisor"
+                                variant="outlined"
+                                density="compact"
+                                :error-messages="form.errors.supervisor_phone"
+                                :error="!!form.errors.supervisor_phone"
+                            ></v-text-field>
+
+                            <v-text-field
+                                v-model="form.supervisor_password"
+                                label="Password Supervisor (Opsional)"
+                                type="password"
+                                variant="outlined"
+                                density="compact"
+                                hint="Kosongkan jika tidak ingin mengubah password"
+                                persistent-hint
+                                :error-messages="
+                                    form.errors.supervisor_password
+                                "
+                                :error="!!form.errors.supervisor_password"
+                            ></v-text-field>
+                        </div>
+
+                        <template #actions>
+                            <v-btn
+                                color="grey"
+                                variant="tonal"
+                                @click="step = 1"
+                            >
+                                Kembali
+                            </v-btn>
+
+                            <v-btn
+                                color="primary"
+                                variant="flat"
+                                @click="step = 3"
+                            >
+                                Lanjut 🚀
+                            </v-btn>
+                        </template>
+                    </v-card>
+                </template>
+
+                <!-- STEP 3: Alamat Mitra -->
+                <template #item.3>
                     <v-card flat class="pa-1">
                         <div class="flex! flex-col! gap-3!">
                             <div id="map"></div>
@@ -419,7 +472,7 @@ console.log(props.mitra.tanggal_masuk);
                             <v-btn
                                 color="grey"
                                 variant="tonal"
-                                @click="step = 1"
+                                @click="step = 2"
                             >
                                 Kembali
                             </v-btn>
@@ -445,8 +498,8 @@ console.log(props.mitra.tanggal_masuk);
 }
 
 #map {
-    height: 400px; /* Atur tinggi sesuai kebutuhan */
+    height: 400px;
     width: 100%;
-    z-index: 1; /* Pastikan tidak tertutup elemen lain */
+    z-index: 1;
 }
 </style>

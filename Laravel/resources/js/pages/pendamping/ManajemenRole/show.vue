@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useForm, router } from "@inertiajs/vue3";
-import PendampingDashboardLayout from "../../layouts/PendampingDashboardLayout.vue"; // Sesuaikan path layout
+import PendampingDashboardLayout from "../../layouts/PendampingDashboardLayout.vue";
 import Swal from "sweetalert2";
 
 // --- PROPS DARI CONTROLLER ---
@@ -19,46 +19,20 @@ const form = useForm({
     name: "",
     email: "",
     phone: "",
-    role: null, // Dropdown Role
     password: "",
     is_active: true,
 });
 
 const search = ref("");
-const filterRole = ref(null);
-
-// --- OPSI DROPDOWN ---
-const filterRoleOptions = [
-    { value: null, name: "Semua Role" },
-    { value: "pendamping", name: "Pendamping" },
-    { value: "supervisors", name: "Supervisors" },
-    { value: "pembimbing", name: "pembimbing" },
-];
-
-const roleOptions = [
-    { value: "pendamping", name: "Pendamping" },
-    { value: "supervisors", name: "Supervisors" },
-    { value: "pembimbing", name: "pembimbing" },
-];
-
-const filteredItems = computed(() => {
-    let data = props.users.data;
-    if (filterRole.value) {
-        data = data.filter((user) => user.role === filterRole.value);
-    }
-    return data;
-});
 
 // --- HEADER TABEL ---
 const headers = [
     { title: "Nama User", key: "name" },
     { title: "Email", key: "email" },
-    { title: "Role", key: "role" }, // Dropdown value tampil disini
+    { title: "No HP", key: "phone" },
     { title: "Status", key: "is_active", align: "center" },
     { title: "Aksi", key: "actions", sortable: false, align: "center" },
 ];
-
-// data filter
 
 // --- FUNGSI ACTIONS ---
 
@@ -81,9 +55,8 @@ const openEditModal = (item) => {
     form.name = item.name;
     form.email = item.email;
     form.phone = item.phone;
-    form.role = item.role;
-    form.is_active = !!item.is_active; // Pastikan boolean
-    form.password = ""; // Password kosongkan saat edit
+    form.is_active = !!item.is_active;
+    form.password = "";
 
     dialog.value = true;
 };
@@ -101,7 +74,7 @@ const submit = () => {
         form.post(route("manajemen-role.store"), {
             onSuccess: () => {
                 dialog.value = false;
-                Swal.fire("Berhasil", "User baru ditambahkan", "success");
+                Swal.fire("Berhasil", "Pendamping baru ditambahkan", "success");
             },
         });
     }
@@ -110,7 +83,7 @@ const submit = () => {
 // 4. Hapus Data
 const deleteItem = (id) => {
     Swal.fire({
-        title: "Hapus User?",
+        title: "Hapus Pendamping?",
         text: "Data tidak bisa dikembalikan!",
         icon: "warning",
         showCancelButton: true,
@@ -119,17 +92,25 @@ const deleteItem = (id) => {
         if (result.isConfirmed) {
             router.delete(route("manajemen-role.destroy", id), {
                 onSuccess: () =>
-                    Swal.fire("Terhapus!", "User dihapus.", "success"),
+                    Swal.fire("Terhapus!", "Pendamping dihapus.", "success"),
             });
         }
     });
 };
+
+const title = [
+    {
+        title: "Manajemen Pendamping",
+        disabled: false,
+        href: route("manajemen-role.index"),
+    },
+];
 </script>
 
 <template>
     <PendampingDashboardLayout>
-        <template #headerTitle
-            ><v-breadcrumbs :items="title" class="text-base md:text-xl">
+        <template #headerTitle>
+            <v-breadcrumbs :items="title" class="text-base md:text-xl">
                 <template v-slot:divider>
                     <v-icon icon="mdi-chevron-right"></v-icon>
                 </template>
@@ -137,49 +118,40 @@ const deleteItem = (id) => {
         </template>
 
         <v-card class="pa-4 border border-gray-700" elevation="2" rounded="lg">
-            <!-- HEADER: Tombol Tambah (Tanpa Search/Filter rumit) -->
-            <div class="flex justify-between gap-3">
-                <div class="grid grid-cols-2 gap-3 w-full">
-                    <!-- cari -->
-                    <v-text-field
-                        v-model="search"
-                        label="Cari Nama Atau Email"
-                        prepend-inner-icon="mdi-magnify"
-                        variant="outlined"
-                        single-line
-                    ></v-text-field>
-                    <!-- filter role -->
-                    <v-select
-                        v-model="filterRole"
-                        label="Pilih Role"
-                        :items="filterRoleOptions"
-                        item-title="name"
-                        item-value="value"
-                    ></v-select>
-                </div>
+            <v-card-title>
+                <h3 class="text-lg md:text-xl mb-2 font-bold">
+                    Data Pendamping
+                </h3>
+            </v-card-title>
+
+            <!-- HEADER: Search & Tombol Tambah -->
+            <div class="flex justify-between gap-3 mb-4">
+                <v-text-field
+                    v-model="search"
+                    label="Cari Nama Atau Email"
+                    prepend-inner-icon="mdi-magnify"
+                    variant="outlined"
+                    single-line
+                    density="compact"
+                    style="max-width: 400px"
+                ></v-text-field>
                 <v-btn
                     color="primary"
                     prepend-icon="mdi-plus"
                     @click="openCreateModal"
                 >
-                    Tambah User
+                    Tambah Pendamping
                 </v-btn>
             </div>
 
             <!-- TABEL DATA -->
             <v-data-table
                 :headers="headers"
-                :items="filteredItems"
+                :items="props.users?.data || []"
+                :search="search"
                 class="elevation-0 border"
                 hover
             >
-                <!-- Kustomisasi Kolom Role -->
-                <template #item.role="{ item }">
-                    <v-chip color="indigo" size="small" class="text-uppercase">
-                        {{ item.role }}
-                    </v-chip>
-                </template>
-
                 <!-- Kustomisasi Kolom Status -->
                 <template #item.is_active="{ item }">
                     <v-icon :color="item.is_active ? 'green' : 'red'">
@@ -217,7 +189,7 @@ const deleteItem = (id) => {
             <v-card>
                 <v-card-title class="bg-indigo-darken-1 text-white">
                     <span class="text-h6">{{
-                        isEditing ? "Edit User" : "Tambah User Baru"
+                        isEditing ? "Edit Pendamping" : "Tambah Pendamping Baru"
                     }}</span>
                 </v-card-title>
 
@@ -261,22 +233,6 @@ const deleteItem = (id) => {
                                     :error-messages="form.errors.phone"
                                     :error="!!form.errors.phone"
                                 ></v-text-field>
-                            </v-col>
-
-                            <!-- DROPDOWN ROLE (SESUAI REQUEST) -->
-                            <v-col cols="12">
-                                <v-select
-                                    v-model="form.role"
-                                    :items="roleOptions"
-                                    item-title="name"
-                                    item-value="value"
-                                    label="Pilih Role"
-                                    variant="outlined"
-                                    density="compact"
-                                    :error-messages="form.errors.role"
-                                    :error="!!form.errors.role"
-                                    clearable
-                                ></v-select>
                             </v-col>
 
                             <!-- PASSWORD -->
@@ -326,7 +282,7 @@ const deleteItem = (id) => {
                         :loading="form.processing"
                         @click="submit"
                     >
-                        {{ isEditing ? "Simpan Perubahan" : "Simpan User" }}
+                        {{ isEditing ? "Simpan Perubahan" : "Simpan" }}
                     </v-btn>
                 </v-card-actions>
             </v-card>

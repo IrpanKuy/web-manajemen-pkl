@@ -22,6 +22,7 @@ class UserSeeder extends Seeder
                 'role' => 'siswa',
                 'phone' => "0812000000$i",
                 'is_active' => true,
+                'is_admin' => false,
                 'created_at' => now(), 'updated_at' => now()
             ];
         }
@@ -35,6 +36,7 @@ class UserSeeder extends Seeder
                 'role' => 'pembimbing',
                 'phone' => "0813000000$i",
                 'is_active' => true,
+                'is_admin' => false,
                 'created_at' => now(), 'updated_at' => now()
             ];
         }
@@ -48,6 +50,7 @@ class UserSeeder extends Seeder
                 'role' => 'pendamping',
                 'phone' => "0814000000$i",
                 'is_active' => true,
+                'is_admin' => $i === 1, // First pendamping is admin
                 'created_at' => now(), 'updated_at' => now()
             ];
         }
@@ -62,6 +65,7 @@ class UserSeeder extends Seeder
                 'role' => 'supervisors',
                 'phone' => "0815000000$i",
                 'is_active' => true,
+                'is_admin' => false,
                 'created_at' => now(), 'updated_at' => now()
             ];
         }

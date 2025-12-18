@@ -9,6 +9,9 @@ const showLaporanDropdown = ref(false);
 const page = usePage();
 const currentRouteName = computed(() => page.props.currentRoute.name);
 
+// Check if user is admin
+const isAdmin = computed(() => page.props.auth?.user?.is_admin || false);
+
 // pengkondisian route
 const isLinkActive = (routeName) => {
     return currentRouteName.value === routeName;
@@ -109,7 +112,9 @@ const isLinkActive = (routeName) => {
                 <div>Mitra Industri</div>
             </Link>
 
+            <!-- Manajemen Role - Only for Admin -->
             <Link
+                v-if="isAdmin"
                 :href="route('manajemen-role.index')"
                 :class="{
                     'bg-[#4A60AA]!': isLinkActive('manajemen-role.index'),
@@ -120,7 +125,7 @@ const isLinkActive = (routeName) => {
                 class="text-white font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
             >
                 <Icon icon="mdi:account-key" width="24" />
-                <div>Manajemen Role</div>
+                <div>Manajemen Pendamping</div>
             </Link>
 
             <!-- Laporan Absensi Dropdown -->

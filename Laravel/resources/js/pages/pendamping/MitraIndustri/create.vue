@@ -20,7 +20,7 @@ let marker = null;
 let circle = null;
 
 watch(step, async (newValue) => {
-    if (newValue === 2) {
+    if (newValue === 3) {
         // PENTING: Tunggu Vue selesai merender elemen <div id="map">
         await nextTick();
 
@@ -31,9 +31,7 @@ watch(step, async (newValue) => {
 
 const initMap = () => {
     // 1. Inisialisasi Map
-    // if (map) return;
-    // Pastikan ID 'map' sesuai dengan id di template
-    map = L.map("map").setView([lat.value, lng.value], 13); // Ganti koordinat sesuai lokasi (contoh: Jombang/Mojokerto)
+    map = L.map("map").setView([lat.value, lng.value], 13);
 
     // 2. Tambahkan Tile Layer (Peta Dasarnya)
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -100,29 +98,34 @@ watch(tempDate, (d) => {
 
 const form = useForm({
     // --- DATA MITRA INDUSTRI ---
-    pendamping_id: null, // Select (menyimpan ID user)
-    supervisors_id: null, // Select (menyimpan ID user)
-    nama_instansi: "", // Text
-    deskripsi: "", // Textarea
-    bidang_usaha: "", // Text
-    jam_masuk: "", // Time (Format: HH:mm)
-    jam_pulang: "", // Time (Format: HH:mm)
-    kuota: 0, // Number (Default 0)
-    jurusan_ids: [], // Multiselect
+    pendamping_id: null,
+    nama_instansi: "",
+    deskripsi: "",
+    bidang_usaha: "",
+    jam_masuk: "",
+    jam_pulang: "",
+    kuota: 0,
+    jurusan_ids: [],
     tanggal_masuk: "",
-    // --- DATA ALAMAT (Relasi ke tabel alamats) ---
-    // Note: Sesuai gambar, kolom tertulis 'profinsi', tapi biasanya 'provinsi'
-    profinsi: "", // Select/Text
-    kabupaten: "", // Select/Text
-    kecamatan: "", // Select/Text
-    kode_pos: "", // Text/Number
-    detail_alamat: "", // Textarea
+
+    // --- SUPERVISOR DATA (Always create new) ---
+    supervisor_name: "",
+    supervisor_email: "",
+    supervisor_phone: "",
+    supervisor_password: "",
+
+    // --- DATA ALAMAT ---
+    profinsi: "",
+    kabupaten: "",
+    kecamatan: "",
+    kode_pos: "",
+    detail_alamat: "",
 
     // kolom 'location'
     latitude: -7.536064,
     longitude: 112.238402,
 
-    radius_meter: 100, // Number (Default radius absen)
+    radius_meter: 100,
 });
 
 // kirim ke controller
@@ -143,7 +146,6 @@ watch(
 
 const onValidationError = () => {
     console.log("Ada error validasi dari useForm!");
-    // Contoh pake SweetAlert:
     Swal.fire({
         icon: "error",
         title: "Gagal terkirim",
@@ -152,21 +154,18 @@ const onValidationError = () => {
 };
 
 Object.keys(form.data()).forEach((field) => {
-    // Kita buat watch untuk setiap field
     watch(
         () => form[field],
         (newVal) => {
-            // Cek: Jika field ini punya error, hapus errornya saat user mengetik
             if (form.errors[field]) {
                 form.clearErrors(field);
             }
-
-            // Opsional: Anda bisa tambahkan logika lain di sini
             console.log(`User mengubah ${field} menjadi ${newVal}`);
         },
         500
     );
 });
+
 // Computed Property: Mengubah "2025-12-03" menjadi "03 Desember 2025" untuk tampilan
 const displayDate = computed(() => {
     if (!tempDate.value) return "";
@@ -181,7 +180,6 @@ const displayDate = computed(() => {
 
 const props = defineProps({
     listPendampings: Array,
-    listSupervisors: Array,
     jurusans: Array,
 });
 </script>
@@ -189,21 +187,17 @@ const props = defineProps({
 <template>
     <PendampingDashboardLayout>
         <template #headerTitle>
-            <!-- mitra -->
             <Link :href="route('mitra-industri.index')">Mitra Industri</Link>
-
-            <!-- icon -->
             <Icon icon="mdi:keyboard-arrow-right" width="32"></Icon>
-
-            <!-- create -->
             <Link :href="route('mitra-industri.create')">Create</Link>
         </template>
         <form @submit.prevent="submit">
             <v-stepper
                 v-model="step"
                 hide-actions
-                :items="['Data Mitra', 'Alamat Mitra']"
+                :items="['Data Mitra', 'Supervisor', 'Alamat Mitra']"
             >
+                <!-- STEP 1: Data Mitra -->
                 <template #item.1>
                     <v-card flat class="p-3!">
                         <div class="grid! grid-cols-2! md:grid-cols-4! gap-3!">
@@ -235,18 +229,6 @@ const props = defineProps({
                                     item-value="id"
                                     :error-messages="form.errors.pendamping_id"
                                     :error="!!form.errors.pendamping_id"
-                                ></v-select>
-                            </div>
-
-                            <div>
-                                <v-select
-                                    v-model="form.supervisors_id"
-                                    label="Pilih Supervisors Mitra"
-                                    :items="listSupervisors"
-                                    item-title="name"
-                                    item-value="id"
-                                    :error-messages="form.errors.supervisors_id"
-                                    :error="!!form.errors.supervisors_id"
                                 ></v-select>
                             </div>
 
@@ -340,7 +322,84 @@ const props = defineProps({
                     </v-card>
                 </template>
 
+                <!-- STEP 2: Supervisor (Create Only) -->
                 <template #item.2>
+                    <v-card flat class="pa-4">
+                        <h3 class="text-lg font-bold mb-4">
+                            Data Supervisor Mitra
+                        </h3>
+
+                        <v-alert type="info" class="mb-4" variant="tonal">
+                            Buat akun supervisor baru untuk mitra ini.
+                            Supervisor akan otomatis dibuat saat mitra disimpan.
+                        </v-alert>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <v-text-field
+                                v-model="form.supervisor_name"
+                                label="Nama Supervisor"
+                                variant="outlined"
+                                density="compact"
+                                :error-messages="form.errors.supervisor_name"
+                                :error="!!form.errors.supervisor_name"
+                            ></v-text-field>
+
+                            <v-text-field
+                                v-model="form.supervisor_email"
+                                label="Email Supervisor"
+                                type="email"
+                                variant="outlined"
+                                density="compact"
+                                :error-messages="form.errors.supervisor_email"
+                                :error="!!form.errors.supervisor_email"
+                            ></v-text-field>
+
+                            <v-text-field
+                                v-model="form.supervisor_phone"
+                                label="No HP Supervisor"
+                                variant="outlined"
+                                density="compact"
+                                :error-messages="form.errors.supervisor_phone"
+                                :error="!!form.errors.supervisor_phone"
+                            ></v-text-field>
+
+                            <v-text-field
+                                v-model="form.supervisor_password"
+                                label="Password Supervisor"
+                                type="password"
+                                variant="outlined"
+                                density="compact"
+                                hint="Minimal 8 karakter"
+                                persistent-hint
+                                :error-messages="
+                                    form.errors.supervisor_password
+                                "
+                                :error="!!form.errors.supervisor_password"
+                            ></v-text-field>
+                        </div>
+
+                        <template #actions>
+                            <v-btn
+                                color="grey"
+                                variant="tonal"
+                                @click="step = 1"
+                            >
+                                Kembali
+                            </v-btn>
+
+                            <v-btn
+                                color="primary"
+                                variant="flat"
+                                @click="step = 3"
+                            >
+                                Lanjut 🚀
+                            </v-btn>
+                        </template>
+                    </v-card>
+                </template>
+
+                <!-- STEP 3: Alamat Mitra -->
+                <template #item.3>
                     <v-card flat class="pa-1">
                         <div class="flex! flex-col! gap-3!">
                             <div id="map"></div>
@@ -408,7 +467,7 @@ const props = defineProps({
                             <v-btn
                                 color="grey"
                                 variant="tonal"
-                                @click="step = 1"
+                                @click="step = 2"
                             >
                                 Kembali
                             </v-btn>
@@ -434,8 +493,8 @@ const props = defineProps({
 }
 
 #map {
-    height: 400px; /* Atur tinggi sesuai kebutuhan */
+    height: 400px;
     width: 100%;
-    z-index: 1; /* Pastikan tidak tertutup elemen lain */
+    z-index: 1;
 }
 </style>
