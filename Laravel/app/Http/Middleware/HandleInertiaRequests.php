@@ -2,7 +2,12 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Approval\MentorRequest;
+use App\Models\Instansi\JurnalHarian;
+use App\Models\Instansi\PklPlacement;
+use App\Models\Siswa\Izin;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Middleware;
 
@@ -47,9 +52,37 @@ class HandleInertiaRequests extends Middleware
                 'name' => Route::currentRouteName(),
             ],
             'flash' => [
-            'success' => fn () => $request->session()->get('success'),
-            'error'   => fn () => $request->session()->get('error'),
-        ],
+                'success' => fn () => $request->session()->get('success'),
+                'error'   => fn () => $request->session()->get('error'),
+            ],
+
+            // Notification badges untuk pembimbing
+            'pembimbingNotifications' => function () use ($request) {
+                $user = $request->user();
+                if (!$user || $user->role !== 'pembimbing') {
+                    return null;
+                }
+
+                $pembimbingId = $user->id;
+
+                // Ambil siswa yang dibimbing
+                $siswaIds = PklPlacement::where('pembimbing_id', $pembimbingId)
+                    ->where('status', 'berjalan')
+                    ->pluck('profile_siswa_id');
+
+                return [
+                    'jurnal_pending' => JurnalHarian::where('pembimbing_id', $pembimbingId)
+                        ->where('status', 'pending')
+                        ->count(),
+                    'izin_pending' => Izin::whereIn('profile_siswa_id', $siswaIds)
+                        ->where('status', 'pending')
+                        ->count(),
+                    'mentor_request_pending' => MentorRequest::where('pembimbing_baru_id', $pembimbingId)
+                        ->where('status', 'pending')
+                        ->count(),
+                ];
+            },
         ];
     }
 }
+

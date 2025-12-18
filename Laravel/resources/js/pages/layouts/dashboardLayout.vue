@@ -135,8 +135,9 @@ const isLinkActive = (routeName) => {
                     <!-- Tombol Download QR Code (Khusus Supervisor) -->
 
                     <div class="mr-8">
-                        not
-                        <div>
+                        <div
+                            v-if="$page.props.auth.user.role === 'supervisors'"
+                        >
                             <v-btn
                                 color="primary"
                                 prepend-icon="mdi-qrcode-scan"
@@ -164,7 +165,13 @@ const isLinkActive = (routeName) => {
                         <slot name="headerTitle" />
                     </h2>
                 </div>
-                <div>not</div>
+                <div v-if="$page.props.auth.user.role === 'supervisors'">
+                    <div>
+                        <v-btn color="primary" @click="downloadQrCode">
+                            <Icon icon="mdi:qrcode-scan" width="24" />
+                        </v-btn>
+                    </div>
+                </div>
             </div>
         </div>
 
