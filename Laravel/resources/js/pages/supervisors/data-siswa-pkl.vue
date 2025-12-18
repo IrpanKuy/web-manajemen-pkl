@@ -1,7 +1,8 @@
 <script setup>
-import { ref, watch } from "vue";
-import { router } from "@inertiajs/vue3";
+import { ref, watch, computed } from "vue";
+import { router, useForm } from "@inertiajs/vue3";
 import SupervisorsDashboardLayout from "../layouts/SupervisorsDashboardLayout.vue";
+import Swal from "sweetalert2";
 
 // --- PROPS ---
 const props = defineProps({
@@ -13,6 +14,16 @@ const props = defineProps({
 // --- STATE ---
 const search = ref(props.filters?.search || "");
 const filterStatus = ref(props.filters?.status || null);
+
+// --- DIALOG STATE ---
+const dialogPengeluaran = ref(false);
+const selectedSiswa = ref(null);
+
+// --- FORM ---
+const form = useForm({
+    profile_siswa_id: null,
+    alasan_pengeluaran: "",
+});
 
 // --- OPTIONS ---
 const statusOptions = [
@@ -26,9 +37,12 @@ const statusOptions = [
 const headers = [
     { title: "No", key: "index", align: "center", sortable: false },
     { title: "Siswa", key: "siswa_info" },
+    { title: "Email", key: "email" },
+    { title: "No HP", key: "phone" },
     { title: "Pembimbing", key: "pembimbing" },
     { title: "Periode PKL", key: "periode" },
     { title: "Status", key: "status", align: "center" },
+    { title: "Aksi", key: "actions", align: "center", sortable: false },
 ];
 
 // --- FILTER ---
@@ -50,6 +64,36 @@ watch(search, () => {
 });
 
 watch(filterStatus, applyFilters);
+
+// --- ACTIONS ---
+const openPengeluaranDialog = (item) => {
+    selectedSiswa.value = item;
+    form.reset();
+    form.clearErrors();
+    form.profile_siswa_id = item.siswa?.id;
+    dialogPengeluaran.value = true;
+};
+
+const submitPengeluaran = () => {
+    form.post(route("pengajuan-pengeluaran.store"), {
+        onSuccess: () => {
+            dialogPengeluaran.value = false;
+            Swal.fire({
+                title: "Pengajuan Berhasil!",
+                text: "Kamu akan segera dihubungi pendamping siswa.",
+                icon: "success",
+                confirmButtonText: "OK",
+            });
+        },
+        onError: () => {
+            Swal.fire({
+                title: "Gagal!",
+                text: "Terjadi kesalahan saat mengirim pengajuan.",
+                icon: "error",
+            });
+        },
+    });
+};
 
 // --- HELPERS ---
 const getStatusColor = (status) => {
@@ -129,7 +173,7 @@ const title = [
                 </template>
 
                 <template v-slot:item.siswa_info="{ item }">
-                    <div class="py-2" style="min-width: 200px">
+                    <div class="py-2" style="min-width: 180px">
                         <div class="font-weight-bold">
                             {{ item.siswa?.user?.name || "N/A" }}
                         </div>
@@ -140,6 +184,14 @@ const title = [
                             {{ item.siswa?.jurusan?.nama_jurusan || "-" }}
                         </div>
                     </div>
+                </template>
+
+                <template v-slot:item.email="{ item }">
+                    {{ item.siswa?.user?.email || "-" }}
+                </template>
+
+                <template v-slot:item.phone="{ item }">
+                    {{ item.siswa?.user?.phone || "-" }}
                 </template>
 
                 <template v-slot:item.pembimbing="{ item }">
@@ -172,7 +224,92 @@ const title = [
                         {{ item.status || "pending" }}
                     </v-chip>
                 </template>
+
+                <!-- AKSI: Ajukan Pengeluaran -->
+                <template v-slot:item.actions="{ item }">
+                    <v-btn
+                        v-if="item.status === 'berjalan'"
+                        color="error"
+                        size="x-small"
+                        variant="flat"
+                        prepend-icon="mdi-account-remove"
+                        @click="openPengeluaranDialog(item)"
+                    >
+                        Ajukan Pengeluaran
+                    </v-btn>
+                    <span v-else class="text-grey text-caption">-</span>
+                </template>
             </v-data-table>
         </v-card>
+
+        <!-- DIALOG FORM PENGAJUAN PENGELUARAN -->
+        <v-dialog v-model="dialogPengeluaran" max-width="500px" persistent>
+            <v-card>
+                <v-card-title
+                    class="bg-error text-white d-flex justify-space-between align-center"
+                >
+                    <span class="text-h6">Ajukan Pengeluaran Siswa</span>
+                    <v-btn
+                        icon="mdi-close"
+                        variant="text"
+                        density="compact"
+                        color="white"
+                        @click="dialogPengeluaran = false"
+                    ></v-btn>
+                </v-card-title>
+
+                <v-card-text class="pt-4">
+                    <!-- Info Siswa -->
+                    <div class="mb-4 pa-3 bg-grey-lighten-4 rounded">
+                        <div class="font-weight-bold">
+                            {{ selectedSiswa?.siswa?.user?.name }}
+                        </div>
+                        <div class="text-caption text-grey">
+                            {{
+                                selectedSiswa?.siswa?.jurusan?.nama_jurusan ||
+                                "-"
+                            }}
+                        </div>
+                        <div class="text-caption text-grey">
+                            Email:
+                            {{ selectedSiswa?.siswa?.user?.email || "-" }}
+                        </div>
+                    </div>
+
+                    <v-form @submit.prevent="submitPengeluaran">
+                        <!-- Alasan Pengeluaran -->
+                        <v-textarea
+                            v-model="form.alasan_pengeluaran"
+                            label="Alasan Pengeluaran"
+                            variant="outlined"
+                            density="compact"
+                            rows="4"
+                            :error-messages="form.errors.alasan_pengeluaran"
+                            prepend-inner-icon="mdi-text"
+                        ></v-textarea>
+                    </v-form>
+                </v-card-text>
+
+                <v-card-actions class="px-4 pb-4">
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        variant="text"
+                        color="grey-darken-1"
+                        @click="dialogPengeluaran = false"
+                    >
+                        Batal
+                    </v-btn>
+                    <v-btn
+                        color="error"
+                        variant="elevated"
+                        @click="submitPengeluaran"
+                        :loading="form.processing"
+                        prepend-icon="mdi-send"
+                    >
+                        Ajukan
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </SupervisorsDashboardLayout>
 </template>

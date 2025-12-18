@@ -4,6 +4,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import DashboardLayout from "./dashboardLayout.vue";
 
 const showMasterDataDropdown = ref(false);
+const showLaporanDropdown = ref(false);
 
 const page = usePage();
 const currentRouteName = computed(() => page.props.currentRoute.name);
@@ -16,6 +17,21 @@ const isLinkActive = (routeName) => {
 <template>
     <DashboardLayout>
         <template #sidebar-menu>
+            <!-- Dashboard -->
+            <Link
+                :href="route('pendamping.dashboard')"
+                :class="{
+                    'bg-[#4A60AA]!': isLinkActive('pendamping.dashboard'),
+                    'hover:bg-[#2C48A5]!': !isLinkActive(
+                        'pendamping.dashboard'
+                    ),
+                }"
+                class="text-white font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
+            >
+                <Icon icon="mdi:view-dashboard" width="24" />
+                <div>Dashboard</div>
+            </Link>
+
             <button
                 @click="showMasterDataDropdown = !showMasterDataDropdown"
                 :class="{
@@ -105,6 +121,155 @@ const isLinkActive = (routeName) => {
             >
                 <Icon icon="mdi:account-key" width="24" />
                 <div>Manajemen Role</div>
+            </Link>
+
+            <!-- Laporan Absensi Dropdown -->
+            <button
+                @click="showLaporanDropdown = !showLaporanDropdown"
+                :class="{
+                    'bg-[#4A60AA]!':
+                        isLinkActive('laporan-harian.index') ||
+                        isLinkActive('laporan-mingguan.index') ||
+                        isLinkActive('laporan-bulanan.index'),
+                    'hover:bg-[#2C48A5]! ':
+                        !isLinkActive('laporan-harian.index') &&
+                        !isLinkActive('laporan-mingguan.index') &&
+                        !isLinkActive('laporan-bulanan.index'),
+                }"
+                class="w-full text-lg text-white font-medium! transition duration-150 flex items-center justify-between px-3 py-2 rounded-md cursor-pointer"
+            >
+                <div class="flex items-center gap-3">
+                    <Icon icon="mdi:chart-bar" width="24" class="text-white" />
+                    <div>Laporan Absensi</div>
+                </div>
+
+                <Icon
+                    icon="mdi:chevron-down"
+                    width="18"
+                    class="transition-transform duration-200 text-white"
+                    :class="{
+                        'rotate-180': showLaporanDropdown,
+                    }"
+                />
+            </button>
+
+            <!-- Laporan Dropdown Items -->
+            <Transition name="fade">
+                <div
+                    v-if="showLaporanDropdown"
+                    class="flex flex-col flex-start pl-8 gap-1 mt-1 rounded-md transition-all duration-300"
+                >
+                    <!-- Laporan Harian -->
+                    <Link
+                        :href="route('laporan-harian.index')"
+                        :class="{
+                            'bg-[#4A60AA]!': isLinkActive(
+                                'laporan-harian.index'
+                            ),
+                            'hover:bg-[#2C48A5]!': !isLinkActive(
+                                'laporan-harian.index'
+                            ),
+                        }"
+                        class="text-white font-medium! transition duration-150 flex items-center gap-3 px-4 py-2 rounded-md"
+                    >
+                        <Icon icon="mdi:calendar-today" width="20" />
+                        <div>Harian</div>
+                    </Link>
+
+                    <!-- Laporan Mingguan -->
+                    <Link
+                        :href="route('laporan-mingguan.index')"
+                        :class="{
+                            'bg-[#4A60AA]!': isLinkActive(
+                                'laporan-mingguan.index'
+                            ),
+                            'hover:bg-[#2C48A5]!': !isLinkActive(
+                                'laporan-mingguan.index'
+                            ),
+                        }"
+                        class="text-white font-medium! transition duration-150 flex items-center gap-3 px-4 py-2 rounded-md"
+                    >
+                        <Icon icon="mdi:calendar-week" width="20" />
+                        <div>Mingguan</div>
+                    </Link>
+
+                    <!-- Laporan Bulanan -->
+                    <Link
+                        :href="route('laporan-bulanan.index')"
+                        :class="{
+                            'bg-[#4A60AA]!': isLinkActive(
+                                'laporan-bulanan.index'
+                            ),
+                            'hover:bg-[#2C48A5]!': !isLinkActive(
+                                'laporan-bulanan.index'
+                            ),
+                        }"
+                        class="text-white font-medium! transition duration-150 flex items-center gap-3 px-4 py-2 rounded-md"
+                    >
+                        <Icon icon="mdi:calendar-month" width="20" />
+                        <div>Bulanan</div>
+                    </Link>
+                </div>
+            </Transition>
+
+            <!-- Rekap Jurnal -->
+            <Link
+                :href="route('rekap-jurnal.index')"
+                :class="{
+                    'bg-[#4A60AA]!': isLinkActive('rekap-jurnal.index'),
+                    'hover:bg-[#2C48A5]!': !isLinkActive('rekap-jurnal.index'),
+                }"
+                class="text-white font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
+            >
+                <Icon icon="mdi:notebook-multiple" width="24" />
+                <div>Rekap Jurnal</div>
+            </Link>
+
+            <!-- Rekap Izin -->
+            <Link
+                :href="route('rekap-izin.index')"
+                :class="{
+                    'bg-[#4A60AA]!': isLinkActive('rekap-izin.index'),
+                    'hover:bg-[#2C48A5]!': !isLinkActive('rekap-izin.index'),
+                }"
+                class="text-white font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
+            >
+                <Icon icon="mdi:file-document-multiple" width="24" />
+                <div>Rekap Izin</div>
+            </Link>
+
+            <!-- Penempatan Siswa -->
+            <Link
+                :href="route('penempatan-siswa.index')"
+                :class="{
+                    'bg-[#4A60AA]!':
+                        isLinkActive('penempatan-siswa.index') ||
+                        isLinkActive('penempatan-siswa.show'),
+                    'hover:bg-[#2C48A5]!':
+                        !isLinkActive('penempatan-siswa.index') &&
+                        !isLinkActive('penempatan-siswa.show'),
+                }"
+                class="text-white font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
+            >
+                <Icon icon="mdi:map-marker-account" width="24" />
+                <div>Penempatan Siswa</div>
+            </Link>
+
+            <!-- Pengajuan Pengeluaran Siswa -->
+            <Link
+                :href="route('pengajuan-pengeluaran.index')"
+                :class="{
+                    'bg-[#4A60AA]!': isLinkActive(
+                        'pengajuan-pengeluaran.index'
+                    ),
+                    'hover:bg-[#2C48A5]!': !isLinkActive(
+                        'pengajuan-pengeluaran.index'
+                    ),
+                }"
+                class="text-white font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
+            >
+                <Icon icon="mdi:account-remove" width="24" />
+                <div>Pengajuan Pengeluaran</div>
             </Link>
         </template>
         <template #content>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\approval\PengajuanMasukSiswaController;
+use App\Http\Controllers\approval\PengajuanPengeluaranController;
 use App\Http\Controllers\Instansi\MitraIndustriController;
 use App\Http\Controllers\pembimbing\AbsensiHarianController;
 use App\Http\Controllers\pembimbing\JurnalSiswaController;
@@ -8,9 +9,17 @@ use App\Http\Controllers\pembimbing\MentorRequestController;
 use App\Http\Controllers\pembimbing\PengajuanIzinController;
 use App\Http\Controllers\pembimbing\RekapAbsensiController;
 use App\Http\Controllers\pembimbing\SiswaBimbinganController;
+use App\Http\Controllers\pendamping\DashboardController;
 use App\Http\Controllers\pendamping\DataSiswaController;
 use App\Http\Controllers\pendamping\JurusanController;
+use App\Http\Controllers\pendamping\LaporanBulananController;
+use App\Http\Controllers\pendamping\LaporanHarianController;
+use App\Http\Controllers\pendamping\LaporanMingguanController;
 use App\Http\Controllers\pendamping\manajemenRoleController;
+use App\Http\Controllers\pendamping\RekapIzinController;
+use App\Http\Controllers\pendamping\RekapJurnalController;
+use App\Http\Controllers\pendamping\PenempatanSiswaController;
+use App\Http\Controllers\pendamping\PengajuanPengeluaranSiswaController;
 use App\Http\Controllers\supervisor\AkunPembimbingController;
 use App\Http\Controllers\supervisor\DataAbsensiBulananController;
 use App\Http\Controllers\supervisor\DataAbsensiHarianController;
@@ -31,11 +40,30 @@ Route::get('/login', function () {
 })->name('login');
 // route pendamping
 Route::prefix('pendamping')->middleware(['HasAuth', 'HasPendamping'])->group(function(){
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('pendamping.dashboard');
     Route::resource('mitra-industri', MitraIndustriController::class);
     Route::resource('manajemen-role', manajemenRoleController::class);
     Route::resource('jurusan', JurusanController::class);
     Route::resource('data-siswa', DataSiswaController::class);
     Route::get('/mitra-industri/{id}/download-qr', [MitraIndustriController::class, 'downloadQr'])->name('mitra-industri.download-qr');
+    
+    // Laporan Absensi
+    Route::get('laporan-harian', [LaporanHarianController::class, 'index'])->name('laporan-harian.index');
+    Route::get('laporan-mingguan', [LaporanMingguanController::class, 'index'])->name('laporan-mingguan.index');
+    Route::get('laporan-bulanan', [LaporanBulananController::class, 'index'])->name('laporan-bulanan.index');
+    
+    // Rekap Data
+    Route::get('rekap-jurnal', [RekapJurnalController::class, 'index'])->name('rekap-jurnal.index');
+    Route::get('rekap-izin', [RekapIzinController::class, 'index'])->name('rekap-izin.index');
+    
+    // Penempatan Siswa
+    Route::get('penempatan-siswa', [PenempatanSiswaController::class, 'index'])->name('penempatan-siswa.index');
+    Route::get('penempatan-siswa/{id}', [PenempatanSiswaController::class, 'show'])->name('penempatan-siswa.show');
+    
+    // Pengajuan Pengeluaran Siswa
+    Route::get('pengajuan-pengeluaran', [PengajuanPengeluaranSiswaController::class, 'index'])->name('pengajuan-pengeluaran.index');
+    Route::post('pengajuan-pengeluaran/{id}/approve', [PengajuanPengeluaranSiswaController::class, 'approve'])->name('pengajuan-pengeluaran.approve');
+    Route::post('pengajuan-pengeluaran/{id}/reject', [PengajuanPengeluaranSiswaController::class, 'reject'])->name('pengajuan-pengeluaran.reject');
 });
 
 // route supervisor
@@ -51,6 +79,9 @@ Route::prefix('supervisors')->middleware(['HasAuth', 'HasSupervisors'])->group(f
     Route::get('data-jurnal', [DataJurnalController::class, 'index'])->name('data-jurnal.index');
     Route::get('data-absensi-harian', [DataAbsensiHarianController::class, 'index'])->name('data-absensi-harian.index');
     Route::get('data-absensi-bulanan', [DataAbsensiBulananController::class, 'index'])->name('data-absensi-bulanan.index');
+    
+    // Pengajuan Pengeluaran
+    Route::post('pengajuan-pengeluaran', [PengajuanPengeluaranController::class, 'store'])->name('pengajuan-pengeluaran.store');
 });
 
 // route pembimbing

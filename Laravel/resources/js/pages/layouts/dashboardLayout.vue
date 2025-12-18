@@ -78,9 +78,12 @@ const isLinkActive = (routeName) => {
             ></div>
         </transition>
         <transition name="fade-slide">
-            <aside v-show="showSidebar" class="h-screen z-50 fixed w-67">
+            <aside
+                v-show="showSidebar"
+                class="h-screen z-50 fixed w-67 flex flex-col"
+            >
                 <!-- logo -->
-                <div class="p-3! h-20 bg-white shadow-md">
+                <div class="p-3! h-20 bg-white shadow-md shrink-0">
                     <img
                         src="/assets/logo-mutu.png"
                         class="bg-cover w-52"
@@ -88,21 +91,25 @@ const isLinkActive = (routeName) => {
                     />
                 </div>
 
+                <!-- Scrollable Menu Area -->
                 <div
-                    class="bg-linear-to-b p-5! h-full flex flex-col justify-between! from-[#1E3A8A] to-[#264AB3]"
+                    class="bg-linear-to-b flex-1 overflow-y-auto from-[#1E3A8A] to-[#264AB3]"
                 >
-                    <div class="flex flex-col gap-4">
+                    <div class="flex flex-col gap-4 p-5!">
                         <slot name="sidebar-menu" />
                     </div>
-                    <!-- logout -->
-                    <div class="border-t-2 border-white">
-                        <div
-                            @click="logout"
-                            class="text-white cursor-pointer mt-2 mb-20! hover:bg-[#4A60AA]! font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
-                        >
-                            <Icon icon="mdi:logout" width="24" />
-                            <div>Logout</div>
-                        </div>
+                </div>
+
+                <!-- Fixed Logout Button -->
+                <div
+                    class="bg-[#264AB3] p-5! shrink-0 border-t-2 border-white/30"
+                >
+                    <div
+                        @click="logout"
+                        class="text-white cursor-pointer hover:bg-[#4A60AA]! font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
+                    >
+                        <Icon icon="mdi:logout" width="24" />
+                        <div>Logout</div>
                     </div>
                 </div>
             </aside>

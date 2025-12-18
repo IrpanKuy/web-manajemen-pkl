@@ -2,6 +2,7 @@
 
 namespace App\Models\User;
 
+use App\Models\Approval\PengajuanPengeluaranSiswa;
 use App\Models\Instansi\PklPlacement;
 use App\Models\Pendamping\Jurusan;
 use App\Models\Siswa\Absensi;
@@ -46,4 +47,9 @@ class ProfileSiswa extends Model
     {
         return $this->hasMany(\App\Models\Instansi\JurnalHarian::class);
     }
+    
+    public function pengajuanPengeluaran()
+    {
+        return $this->hasMany(PengajuanPengeluaranSiswa::class);
+    }   
 }

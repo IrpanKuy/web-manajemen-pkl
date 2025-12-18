@@ -4,8 +4,10 @@ namespace App\Models\Instansi;
 
 use App\Http\Controllers\ProfilePembimbingController;
 use App\Models\Approval\PengajuanMasukSiswa;
+use App\Models\Approval\PengajuanPengeluaranSiswa;
 use App\Models\ProfilePembimbing;
 use App\Models\Siswa\Absensi;
+use App\Models\Siswa\Izin;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -71,5 +73,14 @@ class MitraIndustri extends Model
     public function absensis()
     {
         return $this->hasMany(Absensi::class);
+    }
+    public function pengajuanPengeluaran()
+    {
+        return $this->hasMany(PengajuanPengeluaranSiswa::class);
+    }   
+
+    public function izins()
+    {
+        return $this->hasMany(Izin::class);
     }
 }

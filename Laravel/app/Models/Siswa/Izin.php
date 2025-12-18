@@ -2,6 +2,7 @@
 
 namespace App\Models\Siswa;
 
+use App\Models\Instansi\MitraIndustri;
 use App\Models\User\ProfileSiswa;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
@@ -28,5 +29,10 @@ class Izin extends Model
     public function approver()
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function mitra()
+    {
+        return $this->belongsTo(MitraIndustri::class, 'mitra_industri_id');
     }
 }
