@@ -20,6 +20,7 @@ return new class extends Migration
             $table->enum('role', ['pendamping', 'siswa', 'supervisors', 'pembimbing'])->default('siswa');
             $table->boolean('is_active')->default(true);
             $table->string('phone')->nullable();
+            $table->boolean('is_admin')->default(false);
             $table->rememberToken();
             $table->timestamps();
         });

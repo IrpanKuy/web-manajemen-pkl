@@ -36,29 +36,61 @@ class MitraIndustriController extends Controller
     }
 
     /**
+     * Menampilkan detail mitra dengan semua pembimbing dan siswa.
+     */
+    public function detail($id)
+    {
+        $mitra = MitraIndustri::with([
+            'alamat',
+            'pendamping:id,name,email,phone',
+            'supervisor:id,name,email,phone',
+            'placements' => function ($query) {
+                $query->with([
+                    'siswa.user:id,name,email,phone',
+                    'siswa.jurusan:id,nama_jurusan',
+                    'pembimbing:id,name,email,phone'
+                ])->where('status', 'berjalan');
+            }
+        ])->findOrFail($id);
+
+        // Get unique pembimbings from placements
+        $pembimbings = $mitra->placements
+            ->pluck('pembimbing')
+            ->filter()
+            ->unique('id')
+            ->values();
+
+        // Get all siswa from placements
+        $siswas = $mitra->placements
+            ->map(function ($placement) {
+                return [
+                    'id' => $placement->siswa->id ?? null,
+                    'name' => $placement->siswa->user->name ?? 'N/A',
+                    'email' => $placement->siswa->user->email ?? '-',
+                    'phone' => $placement->siswa->user->phone ?? '-',
+                    'jurusan' => $placement->siswa->jurusan->nama_jurusan ?? '-',
+                    'pembimbing' => $placement->pembimbing->name ?? '-',
+                    'tgl_mulai' => $placement->tgl_mulai,
+                    'tgl_selesai' => $placement->tgl_selesai,
+                    'status' => $placement->status,
+                ];
+            });
+
+        return Inertia::render('pendamping/MitraIndustri/detail', [
+            'mitra' => $mitra,
+            'pembimbings' => $pembimbings,
+            'siswas' => $siswas,
+        ]);
+    }
+
+    /**
      * Halaman Tambah Mitra
      */
     public function create()
     {
-        // 1. Tentukan ID Supervisor yang SUDAH DITUGASKAN
-        // Ambil semua ID yang sudah ada di kolom 'supervisors_id'
-        $assignedSupervisorIds = MitraIndustri::pluck('supervisors_id')
-            ->filter() // Filter untuk menghapus nilai null (Supervisor yang belum ditugaskan)
-            ->unique(); // Pastikan ID yang didapat unik
-        
-        // 2. Query User: Ambil SEMUA user role 'supervisors' 
-        // LALU kecualikan yang ID-nya sudah ada di $assignedSupervisorIds
-        $availableSupervisors = User::where('role', 'supervisors')
-            ->whereNotIn('id', $assignedSupervisorIds)
-            ->get(['id', 'name']); // Ambil hanya ID dan Name
-        // dd($availableSupervisors);
-        
-        // dd(User::pendamping()->get());
         return Inertia::render('pendamping/MitraIndustri/create', [
-            // Kirim data jurusan untuk checkbox/multiselect
             'jurusans' => Jurusan::select('id', 'nama_jurusan')->get(), 
             'listPendampings' => User::pendamping()->select('id', 'name')->get(),
-            'listSupervisors' => $availableSupervisors,
         ]);
     }
 
@@ -70,14 +102,13 @@ class MitraIndustriController extends Controller
         $request->validate([
             // Validasi Mitra
             'pendamping_id' => 'required',
-            'supervisors_id' => 'required',
             'nama_instansi' => 'required|string|max:255',
             'deskripsi' => 'required|string',
             'bidang_usaha' => 'required|string|max:255',
             'jam_masuk' => 'required',
             'jam_pulang' => 'required',
             'kuota' => 'required|integer|min:1',
-            'jurusan_ids' => 'required|array', // Array ID Jurusan
+            'jurusan_ids' => 'required|array',
             'jurusan_ids.*' => 'exists:jurusans,id',
             'tanggal_masuk' => 'required|date',
 
@@ -89,19 +120,32 @@ class MitraIndustriController extends Controller
             'detail_alamat' => 'required|string',
             'radius_meter' => 'required|integer|min:10',
             
-            // Validasi Koordinat (Input dari Maps Frontend)
+            // Validasi Koordinat
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
-        ]);
-
-        
             
-
+            // Supervisor (always create new)
+            'supervisor_name' => 'required|string|max:255',
+            'supervisor_email' => 'required|email|unique:users,email',
+            'supervisor_phone' => 'nullable|string|max:20',
+            'supervisor_password' => 'required|string|min:8',
+        ]);
+        
         $mitra = DB::transaction(function () use ($request) {
+            // Create new supervisor
+            $supervisor = User::create([
+                'name' => $request->supervisor_name,
+                'email' => $request->supervisor_email,
+                'phone' => $request->supervisor_phone,
+                'password' => \Illuminate\Support\Facades\Hash::make($request->supervisor_password),
+                'role' => 'supervisors',
+                'is_active' => true,
+            ]);
+
             // 1. Simpan Data Mitra
             $mitra = MitraIndustri::create([
                 'pendamping_id' => $request->pendamping_id,
-                'supervisors_id' => $request->supervisors_id,
+                'supervisors_id' => $supervisor->id,
                 'nama_instansi' => $request->nama_instansi,
                 'deskripsi' => $request->deskripsi,
                 'bidang_usaha' => $request->bidang_usaha,
@@ -113,7 +157,6 @@ class MitraIndustriController extends Controller
             ]);
 
             // 2. Simpan Alamat dengan Konversi PostGIS
-            // Rumus: ST_SetSRID(ST_MakePoint(Longitude, Latitude), 4326)
             $mitra->alamat()->create([
                 'profinsi' => $request->profinsi,
                 'kabupaten' => $request->kabupaten,
@@ -137,39 +180,43 @@ class MitraIndustriController extends Controller
      */
     public function edit($id)
     {
-        // Load alamat dengan konversi lat/long agar bisa muncul di Peta Edit
-       $mitraIndustri = MitraIndustri::with(['alamat' => function ($query) {
-        $query->selectRaw("
-            *, 
-            ST_Y(location::geometry) as latitude, 
-            ST_X(location::geometry) as longitude
-        ");
-    }])->findOrFail($id);
+        // Load alamat dengan konversi lat/long + supervisor
+        $mitraIndustri = MitraIndustri::with([
+            'alamat' => function ($query) {
+                $query->selectRaw("
+                    *, 
+                    ST_Y(location::geometry) as latitude, 
+                    ST_X(location::geometry) as longitude
+                ");
+            },
+            'supervisor:id,name,email,phone'
+        ])->findOrFail($id);
+
         return Inertia::render('pendamping/MitraIndustri/edit', [
             'mitra' => $mitraIndustri,
             'jurusans' => Jurusan::select('id', 'nama_jurusan')->get(), 
             'listPendampings' => User::pendamping()->select('id', 'name')->get(),
-            'listSupervisors' => User::supervisors()->select('id', 'name')->get(),
         ]);
     }
 
     /**
-     * Update Data Mitra & Alamat
+     * Update Data Mitra & Alamat & Supervisor
      */
     public function update(Request $request, $id)
     {
-        $mitraIndustri = MitraIndustri::findOrFail($id);
-        $request->validate([
+        $mitraIndustri = MitraIndustri::with('supervisor')->findOrFail($id);
+        
+        // Build validation rules
+        $rules = [
             // Validasi Mitra
             'pendamping_id' => 'required',
-            'supervisors_id' => 'required',
             'nama_instansi' => 'required|string|max:255',
             'deskripsi' => 'required|string',
             'bidang_usaha' => 'required|string|max:255',
             'jam_masuk' => 'required',
             'jam_pulang' => 'required',
             'kuota' => 'required|integer|min:1',
-            'jurusan_ids' => 'required|array', // Array ID Jurusan
+            'jurusan_ids' => 'required|array',
             'jurusan_ids.*' => 'exists:jurusans,id',
             'tanggal_masuk' => 'required|date',
 
@@ -181,16 +228,60 @@ class MitraIndustriController extends Controller
             'detail_alamat' => 'required|string',
             'radius_meter' => 'required|integer|min:10',
             
-            // Validasi Koordinat (Input dari Maps Frontend)
+            // Validasi Koordinat
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
-        ]);
+            
+            // Supervisor validation
+            'supervisor_name' => 'required|string|max:255',
+            'supervisor_phone' => 'nullable|string|max:20',
+            'supervisor_password' => 'nullable|string|min:8', // Optional on edit
+        ];
+
+        // Email validation - ignore current supervisor's email
+        if ($mitraIndustri->supervisor) {
+            $rules['supervisor_email'] = [
+                'required', 
+                'email', 
+                \Illuminate\Validation\Rule::unique('users', 'email')->ignore($mitraIndustri->supervisor->id)
+            ];
+        } else {
+            $rules['supervisor_email'] = 'required|email|unique:users,email';
+        }
+
+        $request->validate($rules);
 
         DB::transaction(function () use ($request, $mitraIndustri) {
+            // Update or create supervisor
+            if ($mitraIndustri->supervisor) {
+                $supervisorData = [
+                    'name' => $request->supervisor_name,
+                    'email' => $request->supervisor_email,
+                    'phone' => $request->supervisor_phone,
+                ];
+                
+                // Only update password if provided
+                if ($request->filled('supervisor_password')) {
+                    $supervisorData['password'] = \Illuminate\Support\Facades\Hash::make($request->supervisor_password);
+                }
+                
+                $mitraIndustri->supervisor->update($supervisorData);
+            } else {
+                // Create new supervisor if not exists
+                $supervisor = User::create([
+                    'name' => $request->supervisor_name,
+                    'email' => $request->supervisor_email,
+                    'phone' => $request->supervisor_phone,
+                    'password' => \Illuminate\Support\Facades\Hash::make($request->supervisor_password ?? 'password123'),
+                    'role' => 'supervisors',
+                    'is_active' => true,
+                ]);
+                $mitraIndustri->supervisors_id = $supervisor->id;
+            }
+
             // 1. Update Mitra
             $mitraIndustri->update([
                 'pendamping_id' => $request->pendamping_id,
-                'supervisors_id' => $request->supervisors_id,
                 'nama_instansi' => $request->nama_instansi,
                 'deskripsi' => $request->deskripsi,
                 'bidang_usaha' => $request->bidang_usaha,

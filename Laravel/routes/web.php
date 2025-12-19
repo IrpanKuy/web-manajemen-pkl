@@ -42,10 +42,13 @@ Route::get('/login', function () {
 Route::prefix('pendamping')->middleware(['HasAuth', 'HasPendamping'])->group(function(){
     Route::get('dashboard', [DashboardController::class, 'index'])->name('pendamping.dashboard');
     Route::resource('mitra-industri', MitraIndustriController::class);
-    Route::resource('manajemen-role', manajemenRoleController::class);
+    Route::get('/mitra-industri/{id}/download-qr', [MitraIndustriController::class, 'downloadQr'])->name('mitra-industri.download-qr');
+    Route::get('/mitra-industri/{id}/detail', [MitraIndustriController::class, 'detail'])->name('mitra-industri.detail');
     Route::resource('jurusan', JurusanController::class);
     Route::resource('data-siswa', DataSiswaController::class);
-    Route::get('/mitra-industri/{id}/download-qr', [MitraIndustriController::class, 'downloadQr'])->name('mitra-industri.download-qr');
+    
+    // Manajemen Role - Only for Admin
+    Route::resource('manajemen-role', manajemenRoleController::class)->middleware('IsAdmin');
     
     // Laporan Absensi
     Route::get('laporan-harian', [LaporanHarianController::class, 'index'])->name('laporan-harian.index');

@@ -16,8 +16,8 @@ class manajemenRoleController extends Controller
      */
     public function index()
     {
-        // Ambil data user terbaru, paginate 10
-        $users = User::whereNot('role', 'siswa')->latest()->paginate(10);
+        // Only show pendamping users
+        $users = User::where('role', 'pendamping')->latest()->paginate(10);
 
         return Inertia::render('pendamping/ManajemenRole/show', [
             'users' => $users,
@@ -43,11 +43,13 @@ class manajemenRoleController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'phone' => 'nullable|string|max:20',
-            'role' => 'required|in:pendamping,siswa,supervisors,pembimbing',
             'password' => 'required|string|min:8',
             'is_active' => 'boolean',
         ]);
 
+        // Force role to pendamping
+        $validated['role'] = 'pendamping';
+        
         // Enkripsi Password
         $validated['password'] = Hash::make($validated['password']);
         
@@ -56,7 +58,7 @@ class manajemenRoleController extends Controller
 
         User::create($validated);
 
-        return redirect()->back()->with('success', 'User berhasil dibuat.');
+        return redirect()->back()->with('success', 'Pendamping berhasil dibuat.');
     }
 
     /**
@@ -71,10 +73,12 @@ class manajemenRoleController extends Controller
             // Ignore email unique milik user ini sendiri
             'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
             'phone' => 'nullable|string|max:20',
-            'role' => 'required|in:pendamping,siswa,supervisors,pembimbing',
             'password' => 'nullable|string|min:8', // Password boleh kosong saat edit
             'is_active' => 'boolean',
         ]);
+
+        // Force role to pendamping
+        $validated['role'] = 'pendamping';
 
         // Cek jika password diisi, maka update. Jika kosong, hapus dari array agar tidak terupdate null.
         if ($request->filled('password')) {
@@ -85,7 +89,7 @@ class manajemenRoleController extends Controller
 
         $user->update($validated);
 
-        return redirect()->back()->with('success', 'User berhasil diperbarui.');
+        return redirect()->back()->with('success', 'Pendamping berhasil diperbarui.');
     }
 
     /**
