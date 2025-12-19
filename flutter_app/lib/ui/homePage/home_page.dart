@@ -58,6 +58,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadHomePageData() async {
     try {
       final response = await _homePageClient.getHomePageData();
+      print('response: ' + response.toString());
       setState(() {
         _homePageResponse = response;
         _penempatanData = response.data?.penempatan;
@@ -274,7 +275,8 @@ class _HomePageState extends State<HomePage> {
   // Mapping status dari API ke Logic UI
   String get _currentStatus {
     // Jika data penempatan null -> 'belum'
-    if (_penempatanData == null || _penempatanData?.mitra == null) {
+    if (_penempatanData == null) {
+      print('data penempatan null: ' + _penempatanData.toString());
       return 'belum';
     }
 
@@ -282,6 +284,7 @@ class _HomePageState extends State<HomePage> {
     // Asumsi return: 'pending', 'approved', 'active', 'finished'
     // Menggunakan dummy logic berdasarkan 'status' string yg ada
     String? statusBackend = _penempatanData?.status?.toLowerCase();
+    print('statusBackend: ' + statusBackend.toString());
 
     if (statusBackend == 'pengajuan' || statusBackend == 'pending') {
       return 'pending';
@@ -518,7 +521,7 @@ class _HomePageState extends State<HomePage> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/cari_instansi');
+                Navigator.pushNamed(context, 'pencarian_instansi');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4A60AA),

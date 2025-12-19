@@ -29,8 +29,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/absensi/history', [AbsensiController::class, 'history']);
     Route::get('/jurnal', [\App\Http\Controllers\Api\JurnalController::class, 'index']);
 
+    
+
     // Izin Routes
     Route::get('/izin', [\App\Http\Controllers\Api\IzinController::class, 'index']);
     Route::post('/izin', [\App\Http\Controllers\Api\IzinController::class, 'store']);
     Route::delete('/izin/{id}', [\App\Http\Controllers\Api\IzinController::class, 'destroy']);
+});
+Route::get('/cek-hp', function () {
+    return response()->json(['message' => 'Halo HP, Koneksi Berhasil!']);
 });
