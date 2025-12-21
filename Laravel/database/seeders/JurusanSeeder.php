@@ -9,15 +9,17 @@ class JurusanSeeder extends Seeder
     {
         $jurusans = [
             ['nama_jurusan' => 'Rekayasa Perangkat Lunak'],
-            ['nama_jurusan' => 'Teknik Komputer Jaringan'],
+            ['nama_jurusan' => 'Teknik Komputer dan Jaringan'],
             ['nama_jurusan' => 'Desain Komunikasi Visual'],
             ['nama_jurusan' => 'Multimedia'],
-            ['nama_jurusan' => 'Sistem Informasi Jaringan'],
+            ['nama_jurusan' => 'Sistem Informasi Jaringan dan Aplikasi'],
+            ['nama_jurusan' => 'Teknik Elektronika Industri'],
         ];
 
         foreach ($jurusans as $jurusan) {
             DB::table('jurusans')->insert(array_merge($jurusan, [
-                'created_at' => now(), 'updated_at' => now()
+                'created_at' => now(), 
+                'updated_at' => now()
             ]));
         }
     }

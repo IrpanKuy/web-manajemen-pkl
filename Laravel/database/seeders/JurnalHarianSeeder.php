@@ -8,25 +8,79 @@ class JurnalHarianSeeder extends Seeder
 {
     public function run(): void
     {
-        $placements = DB::table('pkl_placements')->get();
+        // Ambil semua placement yang berjalan
+        $placements = DB::table('pkl_placements')
+            ->where('status', 'berjalan')
+            ->get();
 
-        for ($i = 0; $i < 5; $i++) {
-            $date = Carbon::now()->subDays($i);
-            if ($date->isWeekend()) continue;
+        $today = Carbon::today();
 
-            foreach ($placements as $placement) {
-                // Pastikan placement punya pembimbing
-                if(!$placement->pembimbing_id) continue;
+        // ================================================================
+        // SKENARIO JURNAL:
+        // - Generate jurnal untuk 10 hari ke belakang
+        // - Status valid: pending, disetujui, revisi
+        // - Berbagai judul kegiatan
+        // - Untuk hari ini: beberapa tanpa jurnal (untuk testing)
+        // ================================================================
+
+        $juduls = [
+            'Meeting dan Briefing',
+            'Pengembangan Fitur',
+            'Bug Fixing',
+            'Testing dan QA',
+            'Dokumentasi Teknis',
+            'Review Code',
+            'Deployment Aplikasi',
+            'Maintenance Server',
+            'Research Teknologi',
+            'Diskusi Tim',
+        ];
+
+        $deskripsis = [
+            'Melakukan meeting pagi bersama tim untuk membahas target harian dan progress project.',
+            'Mengembangkan fitur baru pada aplikasi sesuai dengan spesifikasi yang diberikan.',
+            'Memperbaiki bug yang ditemukan pada testing phase kemarin.',
+            'Melakukan testing terhadap fitur yang sudah dikembangkan untuk memastikan kualitas.',
+            'Membuat dokumentasi teknis untuk fitur-fitur yang sudah selesai dikembangkan.',
+            'Melakukan code review untuk memastikan kualitas kode sesuai standar.',
+            'Melakukan deployment aplikasi ke server staging untuk UAT.',
+            'Melakukan maintenance rutin pada server dan memastikan service berjalan normal.',
+            'Melakukan research tentang teknologi baru yang akan diimplementasikan.',
+            'Berdiskusi dengan tim tentang arsitektur dan solusi teknis.',
+        ];
+
+        // Status valid sesuai migration: pending, disetujui, revisi
+        $statusList = ['pending', 'disetujui', 'disetujui', 'disetujui', 'revisi'];
+        $komentarList = [
+            'pending' => null,
+            'disetujui' => 'Good job! Lanjutkan.',
+            'revisi' => 'Mohon jelaskan lebih detail kegiatan yang dilakukan.',
+        ];
+
+        foreach ($placements as $placementIndex => $placement) {
+            if (!$placement->pembimbing_id) continue;
+
+            for ($i = 1; $i <= 10; $i++) {
+                $date = $today->copy()->subDays($i);
+
+                // Skip weekend
+                if ($date->isWeekend()) continue;
+
+                // Skip hari ini dan kemarin untuk placement pertama (untuk testing form jurnal)
+                if ($i <= 1 && $placementIndex === 0) continue;
+
+                $jurnalIndex = ($i + $placementIndex) % count($juduls);
+                $status = $statusList[($i + $placementIndex) % count($statusList)];
 
                 DB::table('jurnal_harians')->insert([
                     'profile_siswa_id' => $placement->profile_siswa_id,
                     'pembimbing_id' => $placement->pembimbing_id,
                     'tanggal' => $date->format('Y-m-d'),
-                    'judul' => 'Kegiatan Harian ' . $date->format('d/m'),
-                    'deskripsi' => 'Melakukan maintenance server dan update aplikasi.',
-                    'foto_kegiatan' => null,
-                    'status' => rand(0, 1) ? 'disetujui' : 'pending',
-                    'komentar' => 'Laporan diterima.',
+                    'judul' => $juduls[$jurnalIndex],
+                    'deskripsi' => $deskripsis[$jurnalIndex],
+                    'foto_kegiatan' => rand(0, 1) ? 'jurnal/foto_kegiatan_sample.jpg' : null,
+                    'status' => $status,
+                    'komentar' => $komentarList[$status],
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

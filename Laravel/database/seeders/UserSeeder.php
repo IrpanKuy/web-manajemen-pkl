@@ -13,60 +13,125 @@ class UserSeeder extends Seeder
         $password = Hash::make('password');
         $users = [];
 
-        // 1. Buat 10 Siswa
-        for ($i = 1; $i <= 10; $i++) {
+        // ================================================================
+        // SISWA (15 Total - Berbagai Skenario)
+        // ================================================================
+        // Siswa 1-3: Belum memilih tempat PKL (tidak ada pengajuan)
+        // Siswa 4-6: Sudah mengajukan tapi pending
+        // Siswa 7-9: Pengajuan ditolak
+        // Siswa 10-12: PKL status pending (menunggu tanggal mulai)
+        // Siswa 13-14: PKL status berjalan
+        // Siswa 15: PKL status selesai (dengan nilai)
+        
+        $siswaNama = [
+            'Ahmad Rizki',      // 1 - belum pkl
+            'Budi Santoso',     // 2 - belum pkl
+            'Citra Dewi',       // 3 - belum pkl
+            'Dani Pratama',     // 4 - pengajuan pending
+            'Eka Putri',        // 5 - pengajuan pending
+            'Fajar Rahman',     // 6 - pengajuan pending
+            'Gita Nirmala',     // 7 - ditolak
+            'Hendra Wijaya',    // 8 - ditolak
+            'Indah Sari',       // 9 - ditolak
+            'Joko Susilo',      // 10 - pkl pending
+            'Kartini Wulan',    // 11 - pkl pending
+            'Lukman Hakim',     // 12 - pkl pending
+            'Maya Anggraini',   // 13 - pkl berjalan
+            'Nanda Kusuma',     // 14 - pkl berjalan
+            'Oscar Prasetyo',   // 15 - pkl selesai
+        ];
+
+        foreach ($siswaNama as $i => $nama) {
+            $idx = $i + 1;
             $users[] = [
-                'name' => "Siswa ke-$i",
-                'email' => "siswa$i@sekolah.com",
+                'name' => $nama,
+                'email' => "siswa{$idx}@sekolah.com",
                 'password' => $password,
                 'role' => 'siswa',
-                'phone' => "0812000000$i",
+                'phone' => "08120000" . str_pad($idx, 3, '0', STR_PAD_LEFT),
                 'is_active' => true,
                 'is_admin' => false,
-                'created_at' => now(), 'updated_at' => now()
+                'created_at' => now(),
+                'updated_at' => now()
             ];
         }
 
-        // 2. Buat 5 Pembimbing Industri (Mentor)
-        for ($i = 1; $i <= 5; $i++) {
+        // ================================================================
+        // PEMBIMBING INDUSTRI (8 Total)
+        // ================================================================
+        $pembimbingNama = [
+            'Ir. Suharto',
+            'Dr. Bambang',
+            'Hj. Aminah',
+            'Drs. Suparman',
+            'Ibu Maria',
+            'Pak Rahman',
+            'Bu Siti',
+            'Pak Jaya',
+        ];
+
+        foreach ($pembimbingNama as $i => $nama) {
+            $idx = $i + 1;
             $users[] = [
-                'name' => "Mentor Industri $i",
-                'email' => "mentor$i@industri.com",
+                'name' => $nama,
+                'email' => "mentor{$idx}@industri.com",
                 'password' => $password,
                 'role' => 'pembimbing',
-                'phone' => "0813000000$i",
+                'phone' => "08130000" . str_pad($idx, 3, '0', STR_PAD_LEFT),
                 'is_active' => true,
                 'is_admin' => false,
-                'created_at' => now(), 'updated_at' => now()
+                'created_at' => now(),
+                'updated_at' => now()
             ];
         }
 
-        // 3. Buat 3 Pendamping (Guru Sekolah)
-        for ($i = 1; $i <= 3; $i++) {
+        // ================================================================
+        // GURU PENDAMPING (3 Total)
+        // ================================================================
+        $guruNama = [
+            ['Pak Agus Widodo', true],   // Admin
+            ['Bu Lina Marlina', false],
+            ['Pak Budi Raharjo', false],
+        ];
+
+        foreach ($guruNama as $i => $data) {
+            $idx = $i + 1;
             $users[] = [
-                'name' => "Guru Pendamping $i",
-                'email' => "guru$i@sekolah.com",
+                'name' => $data[0],
+                'email' => "guru{$idx}@sekolah.com",
                 'password' => $password,
                 'role' => 'pendamping',
-                'phone' => "0814000000$i",
+                'phone' => "08140000" . str_pad($idx, 3, '0', STR_PAD_LEFT),
                 'is_active' => true,
-                'is_admin' => $i === 1, // First pendamping is admin
-                'created_at' => now(), 'updated_at' => now()
+                'is_admin' => $data[1],
+                'created_at' => now(),
+                'updated_at' => now()
             ];
         }
 
-        // 4. [PENTING] Buat 5 Supervisor (Kepala Mitra)
-        // Jumlah ini HARUS SAMA dengan jumlah Mitra yang akan dibuat
-        for ($i = 1; $i <= 5; $i++) {
+        // ================================================================
+        // SUPERVISOR MITRA (5 Total)
+        // ================================================================
+        $supervisorNama = [
+            'HRD Telkom',
+            'Manager Kreatif Digital',
+            'Kepala SDM Gudang Garam',
+            'Kadis Kominfo',
+            'HR GoTo',
+        ];
+
+        foreach ($supervisorNama as $i => $nama) {
+            $idx = $i + 1;
             $users[] = [
-                'name' => "Supervisor Mitra $i",
-                'email' => "spv$i@mitra.com", // Email unik: spv1@mitra.com, dst
+                'name' => $nama,
+                'email' => "spv{$idx}@mitra.com",
                 'password' => $password,
                 'role' => 'supervisors',
-                'phone' => "0815000000$i",
+                'phone' => "08150000" . str_pad($idx, 3, '0', STR_PAD_LEFT),
                 'is_active' => true,
                 'is_admin' => false,
-                'created_at' => now(), 'updated_at' => now()
+                'created_at' => now(),
+                'updated_at' => now()
             ];
         }
 

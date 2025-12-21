@@ -35,7 +35,28 @@ class GenereateDaily extends Command
         $this->line("");
 
         // ================================================================
-        // STEP 1: Update status PKL menjadi 'selesai' jika hari ini = tgl_selesai
+        // STEP 1: Update status PKL dari 'pending' menjadi 'berjalan' 
+        //         jika hari ini >= tgl_mulai
+        // ================================================================
+        $placementsToStart = PklPlacement::where('status', 'pending')
+            ->whereDate('tgl_mulai', '<=', $today)
+            ->get();
+
+        foreach ($placementsToStart as $placement) {
+            $placement->update(['status' => 'berjalan']);
+            $this->info("PKL Placement ID {$placement->id} (Siswa ID: {$placement->profile_siswa_id}) status diubah dari 'pending' menjadi 'berjalan'");
+        }
+
+        if ($placementsToStart->count() > 0) {
+            $this->line("Total {$placementsToStart->count()} PKL placement(s) dimulai.");
+        } else {
+            $this->line("Tidak ada PKL placement yang dimulai hari ini.");
+        }
+
+        $this->line("");
+
+        // ================================================================
+        // STEP 2: Update status PKL menjadi 'selesai' jika hari ini >= tgl_selesai
         // ================================================================
         $placementsToComplete = PklPlacement::where('status', 'berjalan')
             ->whereDate('tgl_selesai', '<=', $today)
@@ -55,7 +76,7 @@ class GenereateDaily extends Command
         $this->line("");
 
         // ================================================================
-        // STEP 2: Generate absensi HANYA untuk PKL dengan status 'berjalan'
+        // STEP 3: Generate absensi HANYA untuk PKL dengan status 'berjalan'
         // ================================================================
         $activePlacements = PklPlacement::with('mitra')
             ->where('status', 'berjalan')

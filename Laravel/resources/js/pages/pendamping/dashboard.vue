@@ -156,7 +156,7 @@ const title = [
             </v-breadcrumbs>
         </template>
 
-        <div class="space-y-6">
+        <div class="space-y-6!">
             <!-- SUMMARY CARDS -->
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <!-- Total Mitra -->
