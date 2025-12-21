@@ -54,4 +54,37 @@ class DataSiswaPklController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Beri nilai untuk siswa yang PKL-nya sudah selesai.
+     */
+    public function beriNilai(Request $request, $id)
+    {
+        $request->validate([
+            'nilai' => 'required|integer|min:0|max:100',
+            'komentar_supervisor' => 'nullable|string|max:500',
+        ]);
+
+        $mitra = MitraIndustri::where('supervisors_id', Auth::id())->first();
+
+        if (!$mitra) {
+            return back()->withErrors(['error' => 'Anda tidak memiliki akses ke mitra ini.']);
+        }
+
+        $placement = PklPlacement::where('id', $id)
+            ->where('mitra_industri_id', $mitra->id)
+            ->where('status', 'selesai')
+            ->first();
+
+        if (!$placement) {
+            return back()->withErrors(['error' => 'Placement tidak ditemukan atau status bukan selesai.']);
+        }
+
+        $placement->update([
+            'nilai' => $request->nilai,
+            'komentar_supervisor' => $request->komentar_supervisor,
+        ]);
+
+        return back()->with('success', 'Nilai berhasil disimpan.');
+    }
 }

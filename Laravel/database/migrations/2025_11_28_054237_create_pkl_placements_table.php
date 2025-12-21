@@ -21,6 +21,8 @@ return new class extends Migration
         
         $table->date('tgl_mulai');
         $table->date('tgl_selesai');
+        $table->integer('nilai')->nullable();
+        $table->string('komentar_supervisor')->nullable();
         $table->enum('status', ['pending', 'berjalan', 'selesai', 'gagal'])->default('pending');
         $table->timestamps();
     });

@@ -37,6 +37,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/izin', [\App\Http\Controllers\Api\IzinController::class, 'index']);
     Route::post('/izin', [\App\Http\Controllers\Api\IzinController::class, 'store']);
     Route::delete('/izin/{id}', [\App\Http\Controllers\Api\IzinController::class, 'destroy']);
+
+    // Mentor Request Routes (Ganti Pembimbing)
+    Route::get('/mentor-request', [\App\Http\Controllers\Api\MentorRequestController::class, 'index']);
+    Route::post('/mentor-request', [\App\Http\Controllers\Api\MentorRequestController::class, 'store']);
+    Route::delete('/mentor-request/{id}', [\App\Http\Controllers\Api\MentorRequestController::class, 'destroy']);
 });
 Route::get('/cek-hp', function () {
     return response()->json(['message' => 'Halo HP, Koneksi Berhasil!']);

@@ -633,7 +633,7 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 8),
           const Text(
-            "Segera cari dan ajukan diri ke perusahaan pavoritmu sekarang!",
+            "Segera cari dan ajukan diri ke perusahaan favoritmu sekarang!",
             style: TextStyle(color: Colors.grey),
             textAlign: TextAlign.center,
           ),

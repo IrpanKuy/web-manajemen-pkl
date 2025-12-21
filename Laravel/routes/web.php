@@ -83,6 +83,9 @@ Route::prefix('supervisors')->middleware(['HasAuth', 'HasSupervisors'])->group(f
     Route::get('data-absensi-harian', [DataAbsensiHarianController::class, 'index'])->name('data-absensi-harian.index');
     Route::get('data-absensi-bulanan', [DataAbsensiBulananController::class, 'index'])->name('data-absensi-bulanan.index');
     
+    // Beri Nilai untuk siswa yang PKL-nya selesai
+    Route::post('data-siswa-pkl/{id}/beri-nilai', [DataSiswaPklController::class, 'beriNilai'])->name('data-siswa-pkl.beri-nilai');
+    
     // Pengajuan Pengeluaran
     Route::post('pengajuan-pengeluaran', [PengajuanPengeluaranController::class, 'store'])->name('pengajuan-pengeluaran.store');
 });

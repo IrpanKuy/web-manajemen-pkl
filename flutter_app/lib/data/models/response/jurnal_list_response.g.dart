@@ -19,13 +19,13 @@ JurnalHistoryResponse _$JurnalHistoryResponseFromJson(
           : JurnalSummary.fromJson(json['summary'] as Map<String, dynamic>),
     );
 
-// Map<String, dynamic> _$JurnalHistoryResponseToJson(
-//         JurnalHistoryResponse instance) =>
-//     <String, dynamic>{
-//       'success': instance.success,
-//       'data': instance.data,
-//       'summary': instance.summary,
-//     };
+Map<String, dynamic> _$JurnalHistoryResponseToJson(
+        JurnalHistoryResponse instance) =>
+    <String, dynamic>{
+      'success': instance.success,
+      'data': instance.data,
+      'summary': instance.summary,
+    };
 
 Jurnal _$JurnalFromJson(Map<String, dynamic> json) => Jurnal(
       id: (json['id'] as num).toInt(),

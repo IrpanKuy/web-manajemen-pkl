@@ -37,11 +37,11 @@ IzinListResponse _$IzinListResponseFromJson(Map<String, dynamic> json) =>
           [],
     );
 
-// Map<String, dynamic> _$IzinListResponseToJson(IzinListResponse instance) =>
-//     <String, dynamic>{
-//       'success': instance.success,
-//       'data': instance.data,
-//     };
+Map<String, dynamic> _$IzinListResponseToJson(IzinListResponse instance) =>
+    <String, dynamic>{
+      'success': instance.success,
+      'data': instance.data,
+    };
 
 IzinActionResponse _$IzinActionResponseFromJson(Map<String, dynamic> json) =>
     IzinActionResponse(
@@ -52,9 +52,9 @@ IzinActionResponse _$IzinActionResponseFromJson(Map<String, dynamic> json) =>
           : Izin.fromJson(json['data'] as Map<String, dynamic>),
     );
 
-// Map<String, dynamic> _$IzinActionResponseToJson(IzinActionResponse instance) =>
-//     <String, dynamic>{
-//       'success': instance.success,
-//       'message': instance.message,
-//       'data': instance.data,
-//     };
+Map<String, dynamic> _$IzinActionResponseToJson(IzinActionResponse instance) =>
+    <String, dynamic>{
+      'success': instance.success,
+      'message': instance.message,
+      'data': instance.data,
+    };

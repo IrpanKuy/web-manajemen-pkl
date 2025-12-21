@@ -17,12 +17,19 @@ const filterStatus = ref(props.filters?.status || null);
 
 // --- DIALOG STATE ---
 const dialogPengeluaran = ref(false);
+const dialogBeriNilai = ref(false);
 const selectedSiswa = ref(null);
 
-// --- FORM ---
+// --- FORM PENGELUARAN ---
 const form = useForm({
     profile_siswa_id: null,
     alasan_pengeluaran: "",
+});
+
+// --- FORM BERI NILAI ---
+const formNilai = useForm({
+    nilai: null,
+    komentar_supervisor: "",
 });
 
 // --- OPTIONS ---
@@ -42,6 +49,7 @@ const headers = [
     { title: "Pembimbing", key: "pembimbing" },
     { title: "Periode PKL", key: "periode" },
     { title: "Status", key: "status", align: "center" },
+    { title: "Nilai", key: "nilai", align: "center" },
     { title: "Aksi", key: "actions", align: "center", sortable: false },
 ];
 
@@ -65,7 +73,7 @@ watch(search, () => {
 
 watch(filterStatus, applyFilters);
 
-// --- ACTIONS ---
+// --- ACTIONS: PENGELUARAN ---
 const openPengeluaranDialog = (item) => {
     selectedSiswa.value = item;
     form.reset();
@@ -89,6 +97,40 @@ const submitPengeluaran = () => {
             Swal.fire({
                 title: "Gagal!",
                 text: "Terjadi kesalahan saat mengirim pengajuan.",
+                icon: "error",
+            });
+        },
+    });
+};
+
+// --- ACTIONS: BERI NILAI ---
+const openBeriNilaiDialog = (item) => {
+    selectedSiswa.value = item;
+    formNilai.reset();
+    formNilai.clearErrors();
+    // Pre-fill if already has nilai
+    if (item.nilai !== null) {
+        formNilai.nilai = item.nilai;
+        formNilai.komentar_supervisor = item.komentar_supervisor || "";
+    }
+    dialogBeriNilai.value = true;
+};
+
+const submitBeriNilai = () => {
+    formNilai.post(route("data-siswa-pkl.beri-nilai", selectedSiswa.value.id), {
+        onSuccess: () => {
+            dialogBeriNilai.value = false;
+            Swal.fire({
+                title: "Nilai Tersimpan!",
+                text: "Nilai siswa berhasil disimpan.",
+                icon: "success",
+                confirmButtonText: "OK",
+            });
+        },
+        onError: () => {
+            Swal.fire({
+                title: "Gagal!",
+                text: "Terjadi kesalahan saat menyimpan nilai.",
                 icon: "error",
             });
         },
@@ -225,8 +267,26 @@ const title = [
                     </v-chip>
                 </template>
 
-                <!-- AKSI: Ajukan Pengeluaran -->
+                <!-- KOLOM NILAI -->
+                <template v-slot:item.nilai="{ item }">
+                    <template v-if="item.status === 'selesai'">
+                        <v-chip
+                            v-if="item.nilai !== null"
+                            :color="item.nilai >= 70 ? 'success' : 'warning'"
+                            size="small"
+                        >
+                            {{ item.nilai }}
+                        </v-chip>
+                        <span v-else class="text-grey text-caption"
+                            >Belum dinilai</span
+                        >
+                    </template>
+                    <span v-else class="text-grey text-caption">-</span>
+                </template>
+
+                <!-- AKSI: Berdasarkan Status -->
                 <template v-slot:item.actions="{ item }">
+                    <!-- Status Berjalan: Ajukan Pengeluaran -->
                     <v-btn
                         v-if="item.status === 'berjalan'"
                         color="error"
@@ -237,6 +297,18 @@ const title = [
                     >
                         Ajukan Pengeluaran
                     </v-btn>
+                    <!-- Status Selesai: Beri Nilai -->
+                    <v-btn
+                        v-else-if="item.status === 'selesai'"
+                        :color="item.nilai !== null ? 'secondary' : 'primary'"
+                        size="x-small"
+                        variant="flat"
+                        prepend-icon="mdi-star-check"
+                        @click="openBeriNilaiDialog(item)"
+                    >
+                        {{ item.nilai !== null ? "Edit Nilai" : "Beri Nilai" }}
+                    </v-btn>
+                    <!-- Status lain -->
                     <span v-else class="text-grey text-caption">-</span>
                 </template>
             </v-data-table>
@@ -307,6 +379,94 @@ const title = [
                         prepend-icon="mdi-send"
                     >
                         Ajukan
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- DIALOG FORM BERI NILAI -->
+        <v-dialog v-model="dialogBeriNilai" max-width="500px" persistent>
+            <v-card>
+                <v-card-title
+                    class="bg-primary text-white d-flex justify-space-between align-center"
+                >
+                    <span class="text-h6">Beri Nilai Siswa</span>
+                    <v-btn
+                        icon="mdi-close"
+                        variant="text"
+                        density="compact"
+                        color="white"
+                        @click="dialogBeriNilai = false"
+                    ></v-btn>
+                </v-card-title>
+
+                <v-card-text class="pt-4">
+                    <!-- Info Siswa -->
+                    <div class="mb-4 pa-3 bg-grey-lighten-4 rounded">
+                        <div class="font-weight-bold">
+                            {{ selectedSiswa?.siswa?.user?.name }}
+                        </div>
+                        <div class="text-caption text-grey">
+                            {{
+                                selectedSiswa?.siswa?.jurusan?.nama_jurusan ||
+                                "-"
+                            }}
+                        </div>
+                        <div class="text-caption text-grey">
+                            Periode:
+                            {{ formatDate(selectedSiswa?.tgl_mulai) }} -
+                            {{ formatDate(selectedSiswa?.tgl_selesai) }}
+                        </div>
+                    </div>
+
+                    <v-form @submit.prevent="submitBeriNilai">
+                        <!-- Nilai -->
+                        <v-text-field
+                            v-model.number="formNilai.nilai"
+                            label="Nilai (0-100)"
+                            variant="outlined"
+                            density="compact"
+                            type="number"
+                            min="0"
+                            max="100"
+                            :error-messages="formNilai.errors.nilai"
+                            prepend-inner-icon="mdi-star"
+                            class="mb-4"
+                        ></v-text-field>
+
+                        <!-- Komentar (Opsional) -->
+                        <v-textarea
+                            v-model="formNilai.komentar_supervisor"
+                            label="Komentar (Opsional)"
+                            variant="outlined"
+                            density="compact"
+                            rows="3"
+                            :error-messages="
+                                formNilai.errors.komentar_supervisor
+                            "
+                            prepend-inner-icon="mdi-comment-text"
+                            placeholder="Berikan komentar atau catatan untuk siswa..."
+                        ></v-textarea>
+                    </v-form>
+                </v-card-text>
+
+                <v-card-actions class="px-4 pb-4">
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        variant="text"
+                        color="grey-darken-1"
+                        @click="dialogBeriNilai = false"
+                    >
+                        Batal
+                    </v-btn>
+                    <v-btn
+                        color="primary"
+                        variant="elevated"
+                        @click="submitBeriNilai"
+                        :loading="formNilai.processing"
+                        prepend-icon="mdi-check"
+                    >
+                        Simpan Nilai
                     </v-btn>
                 </v-card-actions>
             </v-card>

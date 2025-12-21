@@ -13,7 +13,7 @@ class GenereateDaily extends Command
      *
      * @var string
      */
-    protected $signature = 'attendance:generate';
+    protected $signature = 'daily:generate';
 
     /**
      * The console command description.
@@ -28,21 +28,42 @@ class GenereateDaily extends Command
     public function handle()
     {
         $today = Carbon::today();
-        $pklPlacement = PklPlacement::with('mitra')->get();
-
-        // if($today->isWeekend()) {
-        //     $this->info('Hari ini adalah akhir pekan. Tidak ada absensi yang dibuat.');
-        //     return 0;
-        // }
         $now = Carbon::now();
+        
         $this->line("Current time: {$now->toDateTimeString()}");
         $this->line("Today: {$today->toDateString()}");
+        $this->line("");
 
-        foreach ($pklPlacement as $placement) {
-            $tanggalMasuk = Carbon::parse($placement->tgl_mulai);
-            $tanggalSelesai = Carbon::parse($placement->tgl_selesai);
+        // ================================================================
+        // STEP 1: Update status PKL menjadi 'selesai' jika hari ini = tgl_selesai
+        // ================================================================
+        $placementsToComplete = PklPlacement::where('status', 'berjalan')
+            ->whereDate('tgl_selesai', '<=', $today)
+            ->get();
 
-            // if ($tanggalMasuk->gt($today) || $tanggalSelesai->lt($today)) {
+        foreach ($placementsToComplete as $placement) {
+            $placement->update(['status' => 'selesai']);
+            $this->info("PKL Placement ID {$placement->id} (Siswa ID: {$placement->profile_siswa_id}) status diubah menjadi 'selesai'");
+        }
+
+        if ($placementsToComplete->count() > 0) {
+            $this->line("Total {$placementsToComplete->count()} PKL placement(s) selesai.");
+        } else {
+            $this->line("Tidak ada PKL placement yang selesai hari ini.");
+        }
+
+        $this->line("");
+
+        // ================================================================
+        // STEP 2: Generate absensi HANYA untuk PKL dengan status 'berjalan'
+        // ================================================================
+        $activePlacements = PklPlacement::with('mitra')
+            ->where('status', 'berjalan')
+            ->get();
+
+        $this->line("Generating absensi untuk {$activePlacements->count()} PKL placement aktif...");
+
+        foreach ($activePlacements as $placement) {
             // Cek apakah absensi untuk hari ini sudah ada
             $existingAbsensi = \App\Models\Siswa\Absensi::where('profile_siswa_id', $placement->profile_siswa_id)
                 ->where('tanggal', $today->toDateString())
@@ -55,12 +76,13 @@ class GenereateDaily extends Command
                     'tanggal' => $today->toDateString(),
                     'status_kehadiran' => 'pending',
                 ]);
-                $this->line("Generated absensi for siswa ID: {$placement->profile_siswa_id}");
+                $this->line("✓ Generated absensi for Siswa ID: {$placement->profile_siswa_id}");
             } else {
-                $this->line("Absensi already exists for siswa ID: {$placement->profile_siswa_id}");
+                $this->line("- Absensi already exists for Siswa ID: {$placement->profile_siswa_id}");
             }
-        // }
-            // $this->line("belum waktunya pkl");
         }
+
+        $this->line("");
+        $this->info("Daily generate completed!");
     }
 }

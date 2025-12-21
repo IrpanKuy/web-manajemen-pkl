@@ -14,6 +14,8 @@ class PklPlacement extends Model
         'pembimbing_id',        // User ID (Industri)
         'tgl_mulai',
         'tgl_selesai',
+        'nilai',
+        'komentar_supervisor',
         'status',
     ];
 
