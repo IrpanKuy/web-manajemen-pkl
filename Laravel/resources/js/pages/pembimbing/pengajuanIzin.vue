@@ -15,8 +15,8 @@ const search = ref(props.filters?.search || "");
 const filterStatus = ref(props.filters?.status || null);
 
 // --- DIALOG STATE ---
-const dialogBukti = ref(false);
-const selectedBukti = ref(null);
+const detailDialog = ref(false);
+const selectedIzin = ref(null);
 
 // --- STATUS OPTIONS ---
 const statusOptions = [
@@ -46,8 +46,6 @@ const headers = [
     { title: "Siswa", key: "siswa_info" },
     { title: "Tanggal Izin", key: "tanggal" },
     { title: "Durasi", key: "durasi_hari", align: "center" },
-    { title: "Keterangan", key: "keterangan" },
-    { title: "Bukti", key: "bukti_path", align: "center", sortable: false },
     { title: "Status", key: "status", align: "center" },
     { title: "Aksi", key: "actions", align: "center", sortable: false },
 ];
@@ -84,8 +82,15 @@ const openBukti = (path) => {
     }
 };
 
-// 2. Setujui Izin
+// 2. Lihat Detail
+const openDetail = (item) => {
+    selectedIzin.value = item;
+    detailDialog.value = true;
+};
+
+// 3. Setujui Izin
 const setujuiIzin = (id) => {
+    detailDialog.value = false;
     Swal.fire({
         title: "Setujui Pengajuan Izin?",
         text: "Izin siswa akan disetujui",
@@ -103,8 +108,9 @@ const setujuiIzin = (id) => {
     });
 };
 
-// 3. Tolak Izin
+// 4. Tolak Izin
 const tolakIzin = (id) => {
+    detailDialog.value = false;
     Swal.fire({
         title: "Tolak Pengajuan Izin?",
         text: "Izin siswa akan ditolak",
@@ -263,32 +269,6 @@ const title = [
                     </v-chip>
                 </template>
 
-                <!-- Keterangan -->
-                <template v-slot:item.keterangan="{ item }">
-                    <div style="min-width: 200px; max-width: 300px">
-                        <span class="text-wrap">{{
-                            item.keterangan || "-"
-                        }}</span>
-                    </div>
-                </template>
-
-                <!-- Bukti -->
-                <template v-slot:item.bukti_path="{ item }">
-                    <v-tooltip text="Lihat Bukti" location="top">
-                        <template v-slot:activator="{ props }">
-                            <v-btn
-                                v-bind="props"
-                                icon="mdi-file-document"
-                                color="primary"
-                                variant="text"
-                                size="small"
-                                @click="openBukti(item.bukti_path)"
-                                :disabled="!item.bukti_path"
-                            ></v-btn>
-                        </template>
-                    </v-tooltip>
-                </template>
-
                 <!-- Status -->
                 <template v-slot:item.status="{ item }">
                     <v-chip
@@ -300,37 +280,183 @@ const title = [
                     </v-chip>
                 </template>
 
-                <!-- Aksi -->
+                <!-- Aksi Dropdown -->
                 <template v-slot:item.actions="{ item }">
-                    <div
-                        v-if="!item.status || item.status === 'pending'"
-                        class="d-flex gap-2 justify-center flex-wrap"
-                        style="min-width: 160px"
-                    >
-                        <v-btn
-                            color="success"
-                            size="x-small"
-                            variant="flat"
-                            prepend-icon="mdi-check"
-                            @click="setujuiIzin(item.id)"
-                        >
-                            Setujui
-                        </v-btn>
-                        <v-btn
-                            color="error"
-                            size="x-small"
-                            variant="flat"
-                            prepend-icon="mdi-close"
-                            @click="tolakIzin(item.id)"
-                        >
-                            Tolak
-                        </v-btn>
-                    </div>
-                    <div v-else class="text-caption text-grey text-center">
-                        {{ item.approver?.name || "Selesai" }}
-                    </div>
+                    <v-menu>
+                        <template v-slot:activator="{ props }">
+                            <v-btn
+                                v-bind="props"
+                                icon="mdi-dots-vertical"
+                                variant="text"
+                                size="small"
+                            ></v-btn>
+                        </template>
+                        <v-list density="compact">
+                            <v-list-item
+                                prepend-icon="mdi-eye"
+                                title="Lihat Detail"
+                                @click="openDetail(item)"
+                            ></v-list-item>
+                            <v-list-item
+                                v-if="item.bukti_path"
+                                prepend-icon="mdi-file-document"
+                                title="Lihat Bukti"
+                                @click="openBukti(item.bukti_path)"
+                            ></v-list-item>
+                            <v-divider
+                                v-if="!item.status || item.status === 'pending'"
+                            ></v-divider>
+                            <v-list-item
+                                v-if="!item.status || item.status === 'pending'"
+                                prepend-icon="mdi-check"
+                                title="Setujui"
+                                class="text-success"
+                                @click="setujuiIzin(item.id)"
+                            ></v-list-item>
+                            <v-list-item
+                                v-if="!item.status || item.status === 'pending'"
+                                prepend-icon="mdi-close"
+                                title="Tolak"
+                                class="text-error"
+                                @click="tolakIzin(item.id)"
+                            ></v-list-item>
+                        </v-list>
+                    </v-menu>
                 </template>
             </v-data-table>
         </v-card>
+
+        <!-- DETAIL DIALOG -->
+        <v-dialog v-model="detailDialog" max-width="600px">
+            <v-card>
+                <v-card-title class="bg-primary text-white">
+                    <span class="text-h6">Detail Pengajuan Izin</span>
+                </v-card-title>
+
+                <v-card-text class="pt-4">
+                    <v-list lines="two" density="compact">
+                        <v-list-item>
+                            <v-list-item-title class="font-weight-bold"
+                                >Siswa</v-list-item-title
+                            >
+                            <v-list-item-subtitle
+                                >{{
+                                    selectedIzin?.siswa?.user?.name || "-"
+                                }}
+                                ({{
+                                    selectedIzin?.siswa?.jurusan
+                                        ?.nama_jurusan || "-"
+                                }})</v-list-item-subtitle
+                            >
+                        </v-list-item>
+
+                        <v-list-item>
+                            <v-list-item-title class="font-weight-bold"
+                                >Tanggal Izin</v-list-item-title
+                            >
+                            <v-list-item-subtitle>
+                                {{
+                                    selectedIzin?.tgl_mulai
+                                        ? formatDate(selectedIzin.tgl_mulai)
+                                        : "-"
+                                }}
+                                -
+                                {{
+                                    selectedIzin?.tgl_selesai
+                                        ? formatDate(selectedIzin.tgl_selesai)
+                                        : "-"
+                                }}
+                                ({{ selectedIzin?.durasi_hari || 0 }} hari)
+                            </v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item>
+                            <v-list-item-title class="font-weight-bold"
+                                >Keterangan</v-list-item-title
+                            >
+                            <v-list-item-subtitle class="text-wrap">{{
+                                selectedIzin?.keterangan || "-"
+                            }}</v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item v-if="selectedIzin?.bukti_path">
+                            <v-list-item-title class="font-weight-bold"
+                                >Bukti</v-list-item-title
+                            >
+                            <v-list-item-subtitle>
+                                <v-btn
+                                    color="primary"
+                                    variant="outlined"
+                                    size="small"
+                                    prepend-icon="mdi-file-document"
+                                    @click="openBukti(selectedIzin.bukti_path)"
+                                >
+                                    Lihat Bukti
+                                </v-btn>
+                            </v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item>
+                            <v-list-item-title class="font-weight-bold"
+                                >Status</v-list-item-title
+                            >
+                            <v-list-item-subtitle>
+                                <v-chip
+                                    :color="
+                                        getStatusColor(selectedIzin?.status)
+                                    "
+                                    size="small"
+                                    class="text-capitalize"
+                                >
+                                    {{ getStatusLabel(selectedIzin?.status) }}
+                                </v-chip>
+                            </v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item v-if="selectedIzin?.approver">
+                            <v-list-item-title class="font-weight-bold"
+                                >Diproses Oleh</v-list-item-title
+                            >
+                            <v-list-item-subtitle>{{
+                                selectedIzin.approver.name
+                            }}</v-list-item-subtitle>
+                        </v-list-item>
+                    </v-list>
+                </v-card-text>
+
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        v-if="
+                            !selectedIzin?.status ||
+                            selectedIzin?.status === 'pending'
+                        "
+                        color="success"
+                        variant="flat"
+                        @click="setujuiIzin(selectedIzin.id)"
+                    >
+                        Setujui
+                    </v-btn>
+                    <v-btn
+                        v-if="
+                            !selectedIzin?.status ||
+                            selectedIzin?.status === 'pending'
+                        "
+                        color="error"
+                        variant="flat"
+                        @click="tolakIzin(selectedIzin.id)"
+                    >
+                        Tolak
+                    </v-btn>
+                    <v-btn
+                        color="grey"
+                        variant="text"
+                        @click="detailDialog = false"
+                    >
+                        Tutup
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </PembimbingDashboardLayout>
 </template>

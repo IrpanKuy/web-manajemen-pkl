@@ -85,9 +85,9 @@ const isLinkActive = (routeName) => {
                 <!-- logo -->
                 <div class="p-3! h-20 bg-white shadow-md shrink-0">
                     <img
-                        src="/assets/logo-mutu.png"
+                        src="/assets/pkl-go.png"
                         class="bg-cover w-52"
-                        alt="logo-mutu"
+                        alt="pkl-go"
                     />
                 </div>
 

@@ -48,7 +48,7 @@ const title = [
             </v-breadcrumbs>
         </template>
 
-        <div class="space-y-6">
+        <div class="space-y-6!">
             <!-- BACK BUTTON -->
             <div>
                 <Link :href="route('siswa-bimbingan.index')">
@@ -163,13 +163,11 @@ const title = [
                         </h3>
                         <div class="space-y-3">
                             <div class="flex">
-                                <span class="text-grey w-32"
-                                    >Mitra Industri</span
-                                >
+                                <span class="text-grey w-32">Instansi</span>
                                 <span class="font-medium"
                                     >:
                                     {{
-                                        props.placement?.mitra?.nama_mitra ||
+                                        props.placement?.mitra?.nama_instansi ||
                                         "-"
                                     }}</span
                                 >
@@ -180,7 +178,7 @@ const title = [
                                     >:
                                     {{
                                         props.placement?.mitra?.alamat
-                                            ?.alamat_lengkap || "-"
+                                            ?.kecamatan || "-"
                                     }}</span
                                 >
                             </div>

@@ -47,7 +47,6 @@ const headers = [
     { title: "Tanggal", key: "tanggal" },
     { title: "Siswa", key: "siswa_info" },
     { title: "Judul Jurnal", key: "judul" },
-    { title: "Foto", key: "foto_kegiatan", align: "center", sortable: false },
     { title: "Status", key: "status", align: "center" },
     { title: "Aksi", key: "actions", align: "center", sortable: false },
 ];
@@ -283,23 +282,6 @@ const title = [
                     </div>
                 </template>
 
-                <!-- Foto -->
-                <template v-slot:item.foto_kegiatan="{ item }">
-                    <v-tooltip text="Lihat Foto" location="top">
-                        <template v-slot:activator="{ props }">
-                            <v-btn
-                                v-bind="props"
-                                icon="mdi-image"
-                                color="primary"
-                                variant="text"
-                                size="small"
-                                @click="openFoto(item.foto_kegiatan)"
-                                :disabled="!item.foto_kegiatan"
-                            ></v-btn>
-                        </template>
-                    </v-tooltip>
-                </template>
-
                 <!-- Status -->
                 <template v-slot:item.status="{ item }">
                     <v-chip
@@ -318,35 +300,48 @@ const title = [
                     </v-tooltip>
                 </template>
 
-                <!-- Aksi -->
+                <!-- Aksi Dropdown -->
                 <template v-slot:item.actions="{ item }">
-                    <div
-                        v-if="!item.status || item.status === 'pending'"
-                        class="d-flex gap-2 justify-center flex-wrap"
-                        style="min-width: 160px"
-                    >
-                        <v-btn
-                            color="success"
-                            size="x-small"
-                            variant="flat"
-                            prepend-icon="mdi-check"
-                            @click="setujuiJurnal(item.id)"
-                        >
-                            Setujui
-                        </v-btn>
-                        <v-btn
-                            color="error"
-                            size="x-small"
-                            variant="flat"
-                            prepend-icon="mdi-close"
-                            @click="bukaDialogRevisi(item)"
-                        >
-                            Revisi
-                        </v-btn>
-                    </div>
-                    <div v-else class="text-caption text-grey text-center">
-                        Selesai
-                    </div>
+                    <v-menu>
+                        <template v-slot:activator="{ props }">
+                            <v-btn
+                                v-bind="props"
+                                icon="mdi-dots-vertical"
+                                variant="text"
+                                size="small"
+                            ></v-btn>
+                        </template>
+                        <v-list density="compact">
+                            <v-list-item
+                                prepend-icon="mdi-eye"
+                                title="Lihat Detail"
+                                @click="openDetail(item)"
+                            ></v-list-item>
+                            <v-list-item
+                                v-if="item.foto_kegiatan"
+                                prepend-icon="mdi-image"
+                                title="Lihat Foto"
+                                @click="openFoto(item.foto_kegiatan)"
+                            ></v-list-item>
+                            <v-divider
+                                v-if="!item.status || item.status === 'pending'"
+                            ></v-divider>
+                            <v-list-item
+                                v-if="!item.status || item.status === 'pending'"
+                                prepend-icon="mdi-check"
+                                title="Setujui"
+                                class="text-success"
+                                @click="setujuiJurnal(item.id)"
+                            ></v-list-item>
+                            <v-list-item
+                                v-if="!item.status || item.status === 'pending'"
+                                prepend-icon="mdi-pencil"
+                                title="Revisi"
+                                class="text-error"
+                                @click="bukaDialogRevisi(item)"
+                            ></v-list-item>
+                        </v-list>
+                    </v-menu>
                 </template>
             </v-data-table>
         </v-card>
@@ -441,7 +436,6 @@ const title = [
                     </div>
                 </v-card-text>
                 <v-card-actions class="pb-4 px-4">
-                    <v-spacer></v-spacer>
                     <v-btn
                         v-if="selectedJurnal.foto_kegiatan"
                         color="primary"
@@ -449,6 +443,35 @@ const title = [
                         @click="openFoto(selectedJurnal.foto_kegiatan)"
                     >
                         Lihat Foto
+                    </v-btn>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        v-if="
+                            !selectedJurnal?.status ||
+                            selectedJurnal?.status === 'pending'
+                        "
+                        color="success"
+                        variant="flat"
+                        @click="
+                            dialogDetail = false;
+                            setujuiJurnal(selectedJurnal.id);
+                        "
+                    >
+                        Setujui
+                    </v-btn>
+                    <v-btn
+                        v-if="
+                            !selectedJurnal?.status ||
+                            selectedJurnal?.status === 'pending'
+                        "
+                        color="error"
+                        variant="flat"
+                        @click="
+                            dialogDetail = false;
+                            bukaDialogRevisi(selectedJurnal);
+                        "
+                    >
+                        Revisi
                     </v-btn>
                     <v-btn
                         color="grey-darken-1"
