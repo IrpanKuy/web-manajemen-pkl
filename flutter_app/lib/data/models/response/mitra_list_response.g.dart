@@ -53,12 +53,12 @@ MitraListResponse _$MitraListResponseFromJson(Map<String, dynamic> json) =>
           .toList(),
     );
 
-Map<String, dynamic> _$MitraListResponseToJson(MitraListResponse instance) =>
-    <String, dynamic>{
-      'success': instance.success,
-      'message': instance.message,
-      'data': instance.data,
-    };
+// Map<String, dynamic> _$MitraListResponseToJson(MitraListResponse instance) =>
+//     <String, dynamic>{
+//       'success': instance.success,
+//       'message': instance.message,
+//       'data': instance.data,
+//     };
 
 MitraDetailResponse _$MitraDetailResponseFromJson(Map<String, dynamic> json) =>
     MitraDetailResponse(
@@ -69,10 +69,10 @@ MitraDetailResponse _$MitraDetailResponseFromJson(Map<String, dynamic> json) =>
           : MitraModel.fromJson(json['data'] as Map<String, dynamic>),
     );
 
-Map<String, dynamic> _$MitraDetailResponseToJson(
-        MitraDetailResponse instance) =>
-    <String, dynamic>{
-      'success': instance.success,
-      'message': instance.message,
-      'data': instance.data,
-    };
+// Map<String, dynamic> _$MitraDetailResponseToJson(
+//         MitraDetailResponse instance) =>
+//     <String, dynamic>{
+//       'success': instance.success,
+//       'message': instance.message,
+//       'data': instance.data,
+//     };

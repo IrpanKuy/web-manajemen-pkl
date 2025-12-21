@@ -270,7 +270,9 @@ class MitraListView extends StatelessWidget {
         if (parts.length == 2)
           return LatLng(double.parse(parts[0]), double.parse(parts[1]));
       }
-    } catch (e) {}
+    } catch (e) {
+      return null;
+    }
     return null;
   }
 

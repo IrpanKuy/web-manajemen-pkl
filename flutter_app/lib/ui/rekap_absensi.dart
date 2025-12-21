@@ -55,8 +55,18 @@ class _RekapAbsensiState extends State<RekapAbsensi> {
 
   String _getMonthName(int month) {
     const months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember'
     ];
     return months[month - 1];
   }
@@ -67,7 +77,15 @@ class _RekapAbsensiState extends State<RekapAbsensi> {
     // Fallback: simple logic or just return default
     try {
       DateTime date = DateTime.parse(dateStr);
-      const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+      const days = [
+        'Senin',
+        'Selasa',
+        'Rabu',
+        'Kamis',
+        'Jumat',
+        'Sabtu',
+        'Minggu'
+      ];
       return days[date.weekday - 1];
     } catch (e) {
       return '';
@@ -82,16 +100,29 @@ class _RekapAbsensiState extends State<RekapAbsensi> {
       return '';
     }
   }
-   String _getDateMonthShort(String dateStr) {
+
+  String _getDateMonthShort(String dateStr) {
     try {
       DateTime date = DateTime.parse(dateStr);
-      const months = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'];
+      const months = [
+        'JAN',
+        'FEB',
+        'MAR',
+        'APR',
+        'MEI',
+        'JUN',
+        'JUL',
+        'AGU',
+        'SEP',
+        'OKT',
+        'NOV',
+        'DES'
+      ];
       return months[date.month - 1];
     } catch (e) {
       return '';
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -116,13 +147,14 @@ class _RekapAbsensiState extends State<RekapAbsensi> {
           if (_isLoading)
             const Expanded(child: Center(child: CircularProgressIndicator()))
           else if (_errorMessage != null)
-             Expanded(
+            Expanded(
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(_errorMessage!),
-                    ElevatedButton(onPressed: _fetchData, child: const Text('Coba Lagi'))
+                    ElevatedButton(
+                        onPressed: _fetchData, child: const Text('Coba Lagi'))
                   ],
                 ),
               ),
@@ -164,7 +196,8 @@ class _RekapAbsensiState extends State<RekapAbsensi> {
             value: _selectedMonth,
             dropdownColor: const Color(0xFF1D3C8A),
             icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold),
             items: List.generate(12, (index) {
               return DropdownMenuItem(
                 value: index + 1,
@@ -341,23 +374,32 @@ class _RekapAbsensiState extends State<RekapAbsensi> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                if (item.statusKehadiran == 'sakit' || item.statusKehadiran == 'izin')
+                if (item.statusKehadiran == 'sakit' ||
+                    item.statusKehadiran == 'izin')
                   Row(
                     children: [
-                       Icon(Icons.info_outline, size: 16, color: Colors.blue[600]),
-                       const SizedBox(width: 4),
-                       Expanded(child: Text("Sakit/Keterangan", style: TextStyle(color: Colors.grey[600], fontSize: 13))),
+                      Icon(Icons.info_outline,
+                          size: 16, color: Colors.blue[600]),
+                      const SizedBox(width: 4),
+                      Expanded(
+                          child: Text("Sakit/Keterangan",
+                              style: TextStyle(
+                                  color: Colors.grey[600], fontSize: 13))),
                     ],
                   )
                 else if (item.statusKehadiran == 'alpha')
-                   Row(
+                  Row(
                     children: [
-                       Icon(Icons.cancel_outlined, size: 16, color: Colors.red[600]),
-                       const SizedBox(width: 4),
-                       Expanded(child: Text("Tanpa Keterangan", style: TextStyle(color: Colors.grey[600], fontSize: 13))),
+                      Icon(Icons.cancel_outlined,
+                          size: 16, color: Colors.red[600]),
+                      const SizedBox(width: 4),
+                      Expanded(
+                          child: Text("Tanpa Keterangan",
+                              style: TextStyle(
+                                  color: Colors.grey[600], fontSize: 13))),
                     ],
                   )
-                else 
+                else
                   Row(
                     children: [
                       _buildTimeItem(Icons.login, item.jamMasuk),
@@ -374,16 +416,16 @@ class _RekapAbsensiState extends State<RekapAbsensi> {
       ),
     );
   }
-  
+
   Widget _buildTimeItem(IconData icon, String? time) {
     if (time == null) return const SizedBox.shrink();
     // Format time from HH:mm:ss to HH:mm
     String formatted = time;
     try {
-       final parts = time.split(':');
-       if (parts.length >= 2) {
-         formatted = "${parts[0]}:${parts[1]}";
-       }
+      final parts = time.split(':');
+      if (parts.length >= 2) {
+        formatted = "${parts[0]}:${parts[1]}";
+      }
     } catch (_) {}
 
     return Row(
@@ -443,7 +485,8 @@ class _RekapAbsensiState extends State<RekapAbsensi> {
       ),
       child: Text(
         text,
-        style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.bold),
+        style: TextStyle(
+            color: textColor, fontSize: 12, fontWeight: FontWeight.bold),
       ),
     );
   }
