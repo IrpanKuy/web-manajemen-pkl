@@ -397,21 +397,16 @@ class _HomePageState extends State<HomePage> {
   String get _currentStatus {
     // Jika data penempatan null -> 'belum'
     if (_penempatanData == null) {
-      print('data penempatan null: ' + _penempatanData.toString());
       return 'belum';
     }
 
     // Cek status string dari backend (sesuaikan dengan actual response)
     // Asumsi return: 'pending', 'approved', 'active', 'finished'
-    // Menggunakan dummy logic berdasarkan 'status' string yg ada
     String? statusBackend = _penempatanData?.status?.toLowerCase();
-    print('statusBackend: ' + statusBackend.toString());
 
-    if (statusBackend == 'pengajuan' || statusBackend == 'pending') {
+    if (statusBackend == 'pending') {
       return 'pending';
-    } else if (statusBackend == 'disetujui' ||
-        statusBackend == 'berjalan' ||
-        statusBackend == 'active') {
+    } else if (statusBackend == 'berjalan') {
       return 'berjalan';
     } else if (statusBackend == 'selesai') {
       return 'selesai';
@@ -589,207 +584,28 @@ class _HomePageState extends State<HomePage> {
   Widget _buildDynamicStatusCard() {
     switch (_currentStatus) {
       case 'belum':
-        return _buildNoPlacementCard();
+        return NoPlacementCard(
+          onPilihTempat: () =>
+              Navigator.pushNamed(context, '/pencarian_instansi'),
+        );
       case 'pending':
-        return _buildPendingCard();
+        return PendingCard(penempatanData: _penempatanData);
       case 'berjalan':
-        return _buildActiveDashboardCard();
+        return StatusCard(
+          penempatanData: _penempatanData,
+          statusAbsensi: _homePageResponse?.statusAbsensi,
+          onAbsenMasuk: _handleAbsenMasuk,
+          onIsiJurnal: _handleIsiJurnal,
+          onAbsenPulang: _handleAbsenKeluar,
+        );
       case 'selesai':
-        return _buildFinishedCard();
+        return FinishedCard(penempatanData: _penempatanData);
       default:
-        return _buildNoPlacementCard();
+        return NoPlacementCard(
+          onPilihTempat: () =>
+              Navigator.pushNamed(context, 'pencarian_instansi'),
+        );
     }
-  }
-
-  // KONDISI A: Belum Memilih Tempat
-  Widget _buildNoPlacementCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 15,
-              offset: const Offset(0, 5))
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1), shape: BoxShape.circle),
-            child:
-                const Icon(Icons.search_rounded, size: 40, color: Colors.blue),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            "Kamu belum memiliki tempat PKL",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            "Segera cari dan ajukan diri ke perusahaan favoritmu sekarang!",
-            style: TextStyle(color: Colors.grey),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, 'pencarian_instansi');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4A60AA),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-              ),
-              child: const Text("Pilih Tempat PKL",
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // KONDISI B: Pending (Menunggu Tanggal Masuk)
-  Widget _buildPendingCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 15,
-              offset: const Offset(0, 5))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.calendar_month, color: Color(0xFF4A60AA)),
-              SizedBox(width: 8),
-              Text("Menunggu Tanggal Masuk",
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF4A60AA))),
-            ],
-          ),
-          const Divider(height: 30),
-          const Text("Tanggal Masuk PKL", style: TextStyle(color: Colors.grey)),
-          const SizedBox(height: 4),
-          Text(
-            _penempatanData?.tglMulai ?? "DD MMM YYYY",
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
-          // Simple Countdown placeholder
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF4E5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Column(
-              children: [
-                Text("Waktu Tersisa",
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.orange,
-                        fontWeight: FontWeight.bold)),
-                SizedBox(height: 4),
-                Text("5 Hari Lagi",
-                    style: TextStyle(
-                        fontSize: 20,
-                        color: Colors.orange,
-                        fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // KONDISI C: Berjalan (Dashboard Harian)
-  Widget _buildActiveDashboardCard() {
-    return StatusCard(
-      penempatanData: _penempatanData,
-      statusAbsensi: _homePageResponse?.statusAbsensi,
-      onAbsenMasuk: _handleAbsenMasuk,
-      onIsiJurnal: _handleIsiJurnal,
-      onAbsenPulang: _handleAbsenKeluar,
-    );
-  }
-
-  // KONDISI D: Selesai (Nilai & Rekap)
-  Widget _buildFinishedCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 15,
-              offset: const Offset(0, 5))
-        ],
-      ),
-      child: Column(
-        children: [
-          const Text("PKL Selesai",
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green)),
-          const SizedBox(height: 16),
-          const Text("Nilai Akhir", style: TextStyle(color: Colors.grey)),
-          const Text("95",
-              style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF4A60AA))),
-          const SizedBox(height: 24),
-          const Divider(),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStatItem("Hadir", "80"),
-              _buildStatItem("Izin", "2"),
-              _buildStatItem("Alpha", "0"),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value) {
-    return Column(
-      children: [
-        Text(value,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      ],
-    );
   }
 
   // 3. BOTTOM MENU GRID

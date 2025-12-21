@@ -2,6 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/data/models/response/home_page_response.dart';
 
+// =============================================================================
+// STATUS CARD - Card untuk status berjalan (absensi harian)
+// =============================================================================
 class StatusCard extends StatefulWidget {
   final PenempatanData? penempatanData;
   final String?
@@ -243,7 +246,7 @@ class _StatusCardState extends State<StatusCard> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -261,7 +264,7 @@ class _StatusCardState extends State<StatusCard> {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: themeColor.withOpacity(0.1),
+                    color: themeColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(icon, color: themeColor, size: 26),
@@ -317,14 +320,14 @@ class _StatusCardState extends State<StatusCard> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _countdownDuration.inSeconds > 0
-                        ? Colors.orange.withOpacity(0.3)
+                        ? Colors.orange.withValues(alpha: 0.3)
                         : _canAbsenPulang ||
                                 widget.statusAbsensi == 'absenMasuk'
                             ? (_countdownDuration.inSeconds == 0 &&
                                     widget.statusAbsensi == 'absenMasuk'
-                                ? Colors.red.withOpacity(0.3)
-                                : Colors.green.withOpacity(0.3))
-                            : Colors.orange.withOpacity(0.3),
+                                ? Colors.red.withValues(alpha: 0.3)
+                                : Colors.green.withValues(alpha: 0.3))
+                            : Colors.orange.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -421,5 +424,446 @@ class _StatusCardState extends State<StatusCard> {
       ),
       child: const Center(child: CircularProgressIndicator()),
     );
+  }
+}
+
+// =============================================================================
+// NO PLACEMENT CARD - Card untuk siswa yang belum memilih tempat PKL
+// =============================================================================
+class NoPlacementCard extends StatelessWidget {
+  final VoidCallback onPilihTempat;
+
+  const NoPlacementCard({
+    super.key,
+    required this.onPilihTempat,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          )
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child:
+                const Icon(Icons.search_rounded, size: 40, color: Colors.blue),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            "Kamu belum memiliki tempat PKL",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "Segera cari dan ajukan diri ke perusahaan favoritmu sekarang!",
+            style: TextStyle(color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: onPilihTempat,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4A60AA),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: const Text(
+                "Pilih Tempat PKL",
+                style:
+                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// PENDING CARD - Card untuk siswa yang menunggu tanggal masuk PKL
+// =============================================================================
+class PendingCard extends StatefulWidget {
+  final PenempatanData? penempatanData;
+
+  const PendingCard({
+    super.key,
+    required this.penempatanData,
+  });
+
+  @override
+  State<PendingCard> createState() => _PendingCardState();
+}
+
+class _PendingCardState extends State<PendingCard> {
+  Timer? _countdownTimer;
+  Duration _countdownDuration = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeCountdown();
+  }
+
+  @override
+  void didUpdateWidget(PendingCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.penempatanData?.tglMulai != widget.penempatanData?.tglMulai) {
+      _initializeCountdown();
+    }
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
+
+  void _initializeCountdown() {
+    _countdownTimer?.cancel();
+
+    final tglMulaiStr = widget.penempatanData?.tglMulai;
+    if (tglMulaiStr == null || tglMulaiStr.isEmpty) return;
+
+    try {
+      final tglMulai = DateTime.parse(tglMulaiStr);
+      final now = DateTime.now();
+
+      // Set waktu target ke 00:00:00 hari tersebut
+      final targetDate = DateTime(tglMulai.year, tglMulai.month, tglMulai.day);
+      final todayMidnight = DateTime(now.year, now.month, now.day);
+
+      if (todayMidnight.isBefore(targetDate)) {
+        _countdownDuration = targetDate.difference(now);
+        _startCountdown();
+      } else {
+        _countdownDuration = Duration.zero;
+      }
+    } catch (e) {
+      _countdownDuration = Duration.zero;
+    }
+
+    if (mounted) setState(() {});
+  }
+
+  void _startCountdown() {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_countdownDuration.inSeconds > 0) {
+        setState(() {
+          _countdownDuration = _countdownDuration - const Duration(seconds: 1);
+        });
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  String _formatCountdown() {
+    final days = _countdownDuration.inDays;
+    final hours = _countdownDuration.inHours.remainder(24);
+    final minutes = _countdownDuration.inMinutes.remainder(60);
+    final seconds = _countdownDuration.inSeconds.remainder(60);
+
+    if (days > 0) {
+      return '$days Hari ${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    } else if (hours > 0) {
+      return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    }
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null) return 'Belum ditentukan';
+    try {
+      final date = DateTime.parse(dateStr);
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Agu',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des'
+      ];
+      return '${date.day} ${months[date.month - 1]} ${date.year}';
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.calendar_month, color: Color(0xFF4A60AA)),
+              SizedBox(width: 8),
+              Text(
+                "Menunggu Tanggal Masuk",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF4A60AA),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 30),
+          const Text("Tanggal Masuk PKL", style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 4),
+          Text(
+            _formatDate(widget.penempatanData?.tglMulai),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 20),
+          // Countdown
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF4E5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                const Text(
+                  "Waktu Tersisa",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.orange,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _countdownDuration.inSeconds > 0
+                      ? _formatCountdown()
+                      : "Sudah waktunya!",
+                  style: const TextStyle(
+                    fontSize: 20,
+                    color: Colors.orange,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// FINISHED CARD - Card untuk siswa yang PKL-nya sudah selesai
+// =============================================================================
+class FinishedCard extends StatelessWidget {
+  final PenempatanData? penempatanData;
+
+  const FinishedCard({
+    super.key,
+    required this.penempatanData,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final nilai = penempatanData?.nilai;
+    final komentar = penempatanData?.komentarSupervisor;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          )
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.green.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.check_circle_rounded,
+              size: 40,
+              color: Colors.green,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "PKL Selesai",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.green,
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Nilai Section
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0F4FF),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFF4A60AA).withValues(alpha: 0.2),
+              ),
+            ),
+            child: Column(
+              children: [
+                const Text(
+                  "Nilai Akhir",
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  nilai != null ? nilai.toString() : "Belum Dinilai",
+                  style: TextStyle(
+                    fontSize: nilai != null ? 48 : 24,
+                    fontWeight: FontWeight.bold,
+                    color: nilai != null
+                        ? (nilai >= 70
+                            ? const Color(0xFF4A60AA)
+                            : Colors.orange)
+                        : Colors.grey,
+                  ),
+                ),
+                if (nilai != null) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _getGradeColor(nilai).withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _getGradeLabel(nilai),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: _getGradeColor(nilai),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          // Komentar Section (jika ada)
+          if (komentar != null && komentar.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.comment_outlined,
+                          size: 16, color: Colors.grey[600]),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Komentar Supervisor",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    komentar,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Color _getGradeColor(int nilai) {
+    if (nilai >= 85) return Colors.green;
+    if (nilai >= 70) return const Color(0xFF4A60AA);
+    if (nilai >= 55) return Colors.orange;
+    return Colors.red;
+  }
+
+  String _getGradeLabel(int nilai) {
+    if (nilai >= 85) return "Sangat Baik";
+    if (nilai >= 70) return "Baik";
+    if (nilai >= 55) return "Cukup";
+    return "Perlu Perbaikan";
   }
 }

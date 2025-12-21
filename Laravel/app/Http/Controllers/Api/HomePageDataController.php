@@ -48,24 +48,19 @@ class HomePageDataController extends Controller
                             ->first(); 
         $statusAbsensi = '';
 
-        if(!$absensiHarian){
-            return response()->json([
-                'success' => false,
-                'message' => 'Absensi tidak ditemukan.',
-                'today' => $today,
-                'data' => null
-            ], 404);
+        if($absensiHarian){
+            // cek absensi
+            if ($absensiHarian->jam_masuk === null) {
+                $statusAbsensi = 'absenMasuk';
+            } elseif ($absensiHarian->jam_pulang === null && $jurnalHarian === null) {
+                $statusAbsensi = 'buatJurnal';
+            } elseif ($absensiHarian->jam_pulang === null && $jurnalHarian !== null) {
+                $statusAbsensi = 'absenPulang';
+            } else {
+                $statusAbsensi = 'selesai';
+            }
         }
-        // cek absensi
-        if ($absensiHarian->jam_masuk === null) {
-            $statusAbsensi = 'absenMasuk';
-        } elseif ($absensiHarian->jam_pulang === null && $jurnalHarian === null) {
-            $statusAbsensi = 'buatJurnal';
-        } elseif ($absensiHarian->jam_pulang === null && $jurnalHarian !== null) {
-            $statusAbsensi = 'absenPulang';
-        } else {
-            $statusAbsensi = 'selesai';
-        }
+        
         
         return response()->json([
             'success' => true,

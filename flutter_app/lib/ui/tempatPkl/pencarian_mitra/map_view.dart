@@ -26,7 +26,7 @@ class MitraMapView extends StatelessWidget {
     return FlutterMap(
       mapController: mapController,
       options: const MapOptions(
-        initialCenter: LatLng(-7.2575, 112.7521), // Default Surabaya
+        initialCenter: LatLng(-6.2575, 106.7521), // Default jakarta
         initialZoom: 12.0,
       ),
       children: [

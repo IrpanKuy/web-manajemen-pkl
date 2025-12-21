@@ -48,6 +48,9 @@ class PenempatanData {
   final String? tglMulai;
   @JsonKey(name: 'tgl_selesai')
   final String? tglSelesai;
+  final int? nilai;
+  @JsonKey(name: 'komentar_supervisor')
+  final String? komentarSupervisor;
   final MitraData? mitra;
 
   PenempatanData({
@@ -55,6 +58,8 @@ class PenempatanData {
     this.pembimbing,
     this.tglMulai,
     this.tglSelesai,
+    this.nilai,
+    this.komentarSupervisor,
     this.mitra,
   });
 
