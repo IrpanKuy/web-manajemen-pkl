@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\supervisor;
 
+use App\Exports\SupervisorAbsensiHarianExport;
 use App\Http\Controllers\Controller;
 use App\Models\Instansi\MitraIndustri;
 use App\Models\Instansi\PklPlacement;
@@ -10,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DataAbsensiHarianController extends Controller
 {
@@ -79,4 +81,16 @@ class DataAbsensiHarianController extends Controller
             'tanggal' => $tanggal,
         ]);
     }
+
+    /**
+     * Export absensi harian ke Excel
+     */
+    public function export(Request $request)
+    {
+        $tanggal = $request->tanggal ?? Carbon::today()->format('Y-m-d');
+        $filename = 'absensi_harian_' . $tanggal . '.xlsx';
+
+        return Excel::download(new SupervisorAbsensiHarianExport($tanggal), $filename);
+    }
 }
+

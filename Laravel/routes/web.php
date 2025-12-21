@@ -31,9 +31,6 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use PhpParser\Builder\Function_;
 
-Route::get('/welcome', function () {
-    return Inertia::render('welcome'); 
-})->name('welcome');
 
 Route::get('/login', function () {
     return Inertia::render('login'); 
@@ -86,7 +83,9 @@ Route::prefix('supervisors')->middleware(['HasAuth', 'HasSupervisors'])->group(f
     Route::get('data-izin', [DataIzinController::class, 'index'])->name('data-izin.index');
     Route::get('data-jurnal', [DataJurnalController::class, 'index'])->name('data-jurnal.index');
     Route::get('data-absensi-harian', [DataAbsensiHarianController::class, 'index'])->name('data-absensi-harian.index');
+    Route::get('data-absensi-harian/export', [DataAbsensiHarianController::class, 'export'])->name('data-absensi-harian.export');
     Route::get('data-absensi-bulanan', [DataAbsensiBulananController::class, 'index'])->name('data-absensi-bulanan.index');
+    Route::get('data-absensi-bulanan/export', [DataAbsensiBulananController::class, 'export'])->name('data-absensi-bulanan.export');
     
     // Beri Nilai untuk siswa yang PKL-nya selesai
     Route::post('data-siswa-pkl/{id}/beri-nilai', [DataSiswaPklController::class, 'beriNilai'])->name('data-siswa-pkl.beri-nilai');
@@ -104,10 +103,6 @@ Route::prefix('pembimbing')->middleware(['HasAuth', 'HasPembimbing'])->group(fun
     Route::get('absensi-harian', [AbsensiHarianController::class, 'index'])->name('absensi-harian.index');
     Route::get('rekap-absensi', [RekapAbsensiController::class, 'index'])->name('rekap-absensi.index');
 });
-
-Route::get('/register', function () {
-    return Inertia::render('register'); 
-})->name('register');
 
 
 

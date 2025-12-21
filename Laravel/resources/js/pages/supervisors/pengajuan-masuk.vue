@@ -1,8 +1,10 @@
 <script setup>
 import SupervisorsDashboardLayout from "../layouts/SupervisorsDashboardLayout.vue";
 import { computed, ref } from "vue";
-import { router } from "@inertiajs/vue3";
+import { router, usePage } from "@inertiajs/vue3";
 import Swal from "sweetalert2";
+
+const page = usePage();
 
 // Props dari Controller Laravel
 const props = defineProps({
@@ -39,13 +41,13 @@ const statusCounts = computed(() => {
         }
     );
 });
-// Konfigurasi Header Tabel Vuetify
+
+// Konfigurasi Header Tabel Vuetify - Hapus CV dan Deskripsi
 const headers = [
     { title: "No", key: "index", align: "center", sortable: false },
     { title: "Siswa", key: "siswa_info" }, // Custom slot untuk gabungan Nama/NISN/Kelas
     { title: "Tanggal Ajuan", key: "tgl_ajuan" },
     { title: "Durasi", key: "durasi" },
-    { title: "CV", key: "cv_path", align: "center", sortable: false },
     { title: "Status", key: "status", align: "center" },
     { title: "Aksi", key: "actions", align: "center", sortable: false },
 ];
@@ -58,6 +60,10 @@ const formTolak = ref({
 });
 const loading = ref(false);
 
+// --- State untuk Dialog Detail ---
+const detailDialog = ref(false);
+const selectedItem = ref(null);
+
 // --- Fungsi Aksi ---
 
 // 1. Fungsi Buka CV
@@ -66,7 +72,13 @@ const openCv = (path) => {
     window.open(`/storage/${path}`, "_blank");
 };
 
-// 2. Fungsi Terima Pengajuan
+// 2. Fungsi Buka Detail
+const openDetail = (item) => {
+    selectedItem.value = item;
+    detailDialog.value = true;
+};
+
+// 3. Fungsi Terima Pengajuan
 const terimaPengajuan = (id) => {
     Swal.fire({
         title: "Terima Siswa?",
@@ -84,14 +96,14 @@ const terimaPengajuan = (id) => {
     });
 };
 
-// 3. Fungsi Persiapan Tolak (Buka Dialog)
+// 4. Fungsi Persiapan Tolak (Buka Dialog)
 const bukaDialogTolak = (id) => {
     formTolak.value.id = id;
     formTolak.value.alasan = "";
     dialogTolak.value = true;
 };
 
-// 4. Fungsi Submit Tolak
+// 5. Fungsi Submit Tolak
 const submitTolak = () => {
     if (!formTolak.value.alasan) {
         return Swal.fire(
@@ -133,6 +145,15 @@ const getStatusColor = (status) => {
     if (status === "diterima") return "success";
     if (status === "ditolak") return "error";
     return "warning";
+};
+
+// Format date helper
+const formatDate = (date) => {
+    return new Date(date).toLocaleDateString("id-ID", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    });
 };
 </script>
 
@@ -198,7 +219,7 @@ const getStatusColor = (status) => {
                 <template v-slot:item.siswa_info="{ item }">
                     <div
                         class="d-flex flex-column py-2"
-                        style="min-width: 200px"
+                        style="min-width: 180px"
                     >
                         <span class="font-weight-bold">{{
                             item.siswa.user.name || "No Name"
@@ -206,10 +227,6 @@ const getStatusColor = (status) => {
                         <span class="text-caption text-grey">
                             Jurusan:
                             {{ item.siswa.jurusan.nama_jurusan || "-" }}
-                        </span>
-                        <span class="text-caption mt-1">
-                            <span class="font-semibold">Deskripsi: </span>
-                            {{ item.deskripsi }}
                         </span>
                     </div>
                 </template>
@@ -224,21 +241,6 @@ const getStatusColor = (status) => {
                 <template v-slot:item.durasi="{ item }">
                     {{ item.durasi }} Bulan
                 </template>
-                <template v-slot:item.cv_path="{ item }">
-                    <v-tooltip text="Lihat CV" location="top">
-                        <template v-slot:activator="{ props }">
-                            <v-btn
-                                v-bind="props"
-                                icon="mdi-file-document-outline"
-                                color="primary"
-                                variant="text"
-                                size="small"
-                                @click="openCv(item.cv_path)"
-                                :disabled="!item.cv_path"
-                            ></v-btn>
-                        </template>
-                    </v-tooltip>
-                </template>
 
                 <template v-slot:item.status="{ item }">
                     <v-chip
@@ -249,7 +251,7 @@ const getStatusColor = (status) => {
                         {{ item.status || "pending" }}
                     </v-chip>
                     <v-tooltip
-                        v-if="item.status === 'Ditolak'"
+                        v-if="item.status === 'ditolak'"
                         activator="parent"
                         location="bottom"
                     >
@@ -258,35 +260,46 @@ const getStatusColor = (status) => {
                 </template>
 
                 <template v-slot:item.actions="{ item }">
-                    <div
-                        v-if="!item.status || item.status === 'pending'"
-                        class="d-flex gap-2 justify-center flex-wrap"
-                        style="min-width: 140px"
-                    >
-                        <v-btn
-                            color="success"
-                            size="x-small"
-                            variant="flat"
-                            prepend-icon="mdi-check"
-                            @click="terimaPengajuan(item.id)"
-                            class="mr-2"
-                        >
-                            Terima
-                        </v-btn>
-
-                        <v-btn
-                            color="error"
-                            size="x-small"
-                            variant="flat"
-                            prepend-icon="mdi-close"
-                            @click="bukaDialogTolak(item.id)"
-                        >
-                            Tolak
-                        </v-btn>
-                    </div>
-                    <div v-else class="text-caption text-grey text-center">
-                        Selesai
-                    </div>
+                    <v-menu>
+                        <template v-slot:activator="{ props }">
+                            <v-btn
+                                v-bind="props"
+                                icon="mdi-dots-vertical"
+                                variant="text"
+                                size="small"
+                            ></v-btn>
+                        </template>
+                        <v-list density="compact">
+                            <v-list-item
+                                prepend-icon="mdi-eye"
+                                title="Lihat Detail"
+                                @click="openDetail(item)"
+                            ></v-list-item>
+                            <v-list-item
+                                v-if="item.cv_path"
+                                prepend-icon="mdi-file-document"
+                                title="Lihat CV"
+                                @click="openCv(item.cv_path)"
+                            ></v-list-item>
+                            <v-divider
+                                v-if="!item.status || item.status === 'pending'"
+                            ></v-divider>
+                            <v-list-item
+                                v-if="!item.status || item.status === 'pending'"
+                                prepend-icon="mdi-check"
+                                title="Terima"
+                                class="text-success"
+                                @click="terimaPengajuan(item.id)"
+                            ></v-list-item>
+                            <v-list-item
+                                v-if="!item.status || item.status === 'pending'"
+                                prepend-icon="mdi-close"
+                                title="Tolak"
+                                class="text-error"
+                                @click="bukaDialogTolak(item.id)"
+                            ></v-list-item>
+                        </v-list>
+                    </v-menu>
                 </template>
             </v-data-table>
         </v-card>
@@ -333,6 +346,153 @@ const getStatusColor = (status) => {
                 </div>
             </div>
         </transition>
+
+        <!-- Detail Dialog -->
+        <v-dialog v-model="detailDialog" max-width="600px">
+            <v-card>
+                <v-card-title class="bg-primary text-white">
+                    <span class="text-h6">Detail Pengajuan</span>
+                </v-card-title>
+
+                <v-card-text class="pt-4">
+                    <v-list lines="two" density="compact">
+                        <v-list-item>
+                            <v-list-item-title class="font-weight-bold"
+                                >Nama Siswa</v-list-item-title
+                            >
+                            <v-list-item-subtitle>{{
+                                selectedItem?.siswa?.user?.name || "-"
+                            }}</v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item>
+                            <v-list-item-title class="font-weight-bold"
+                                >Jurusan</v-list-item-title
+                            >
+                            <v-list-item-subtitle>{{
+                                selectedItem?.siswa?.jurusan?.nama_jurusan ||
+                                "-"
+                            }}</v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item>
+                            <v-list-item-title class="font-weight-bold"
+                                >Tanggal Ajuan</v-list-item-title
+                            >
+                            <v-list-item-subtitle>{{
+                                selectedItem?.tgl_ajuan
+                                    ? formatDate(selectedItem.tgl_ajuan)
+                                    : "-"
+                            }}</v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item>
+                            <v-list-item-title class="font-weight-bold"
+                                >Durasi PKL</v-list-item-title
+                            >
+                            <v-list-item-subtitle
+                                >{{
+                                    selectedItem?.durasi || 0
+                                }}
+                                Bulan</v-list-item-subtitle
+                            >
+                        </v-list-item>
+
+                        <v-list-item>
+                            <v-list-item-title class="font-weight-bold"
+                                >Deskripsi</v-list-item-title
+                            >
+                            <v-list-item-subtitle class="text-wrap">{{
+                                selectedItem?.deskripsi || "-"
+                            }}</v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item>
+                            <v-list-item-title class="font-weight-bold"
+                                >Status</v-list-item-title
+                            >
+                            <v-list-item-subtitle>
+                                <v-chip
+                                    :color="
+                                        getStatusColor(selectedItem?.status)
+                                    "
+                                    size="small"
+                                    class="text-capitalize"
+                                >
+                                    {{ selectedItem?.status || "pending" }}
+                                </v-chip>
+                            </v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item v-if="selectedItem?.status === 'ditolak'">
+                            <v-list-item-title
+                                class="font-weight-bold text-error"
+                                >Alasan Penolakan</v-list-item-title
+                            >
+                            <v-list-item-subtitle class="text-wrap">{{
+                                selectedItem?.alasan_penolakan || "-"
+                            }}</v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item v-if="selectedItem?.cv_path">
+                            <v-list-item-title class="font-weight-bold"
+                                >CV</v-list-item-title
+                            >
+                            <v-list-item-subtitle>
+                                <v-btn
+                                    color="primary"
+                                    variant="outlined"
+                                    size="small"
+                                    prepend-icon="mdi-file-document"
+                                    @click="openCv(selectedItem.cv_path)"
+                                >
+                                    Lihat CV
+                                </v-btn>
+                            </v-list-item-subtitle>
+                        </v-list-item>
+                    </v-list>
+                </v-card-text>
+
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        v-if="
+                            !selectedItem?.status ||
+                            selectedItem?.status === 'pending'
+                        "
+                        color="success"
+                        variant="flat"
+                        @click="
+                            detailDialog = false;
+                            terimaPengajuan(selectedItem.id);
+                        "
+                    >
+                        Terima
+                    </v-btn>
+                    <v-btn
+                        v-if="
+                            !selectedItem?.status ||
+                            selectedItem?.status === 'pending'
+                        "
+                        color="error"
+                        variant="flat"
+                        @click="
+                            detailDialog = false;
+                            bukaDialogTolak(selectedItem.id);
+                        "
+                    >
+                        Tolak
+                    </v-btn>
+                    <v-btn
+                        color="grey"
+                        variant="text"
+                        @click="detailDialog = false"
+                    >
+                        Tutup
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </SupervisorsDashboardLayout>
 </template>
 <style scoped>

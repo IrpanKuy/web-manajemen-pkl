@@ -5,6 +5,12 @@ import DashboardLayout from "./dashboardLayout.vue";
 
 const page = usePage();
 const currentRouteName = computed(() => page.props.currentRoute.name);
+const supervisorNotifications = computed(
+    () => page.props.supervisorNotifications
+);
+
+// State untuk dropdown Laporan
+const openLaporan = ref(false);
 
 // pengkondisian route
 const isLinkActive = (routeName) => {
@@ -29,7 +35,7 @@ const isLinkActive = (routeName) => {
                 <div>Profile Instansi</div>
             </Link>
 
-            <!-- Pengajuan Masuk -->
+            <!-- Pengajuan Masuk dengan Badge -->
             <Link
                 :href="route('pengajuan-masuk.index')"
                 :class="{
@@ -38,10 +44,18 @@ const isLinkActive = (routeName) => {
                         'pengajuan-masuk.index'
                     ),
                 }"
-                class="text-white font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
+                class="text-white font-medium! transition duration-150 flex items-center justify-between px-3 py-2 rounded-md"
             >
-                <Icon icon="mdi:inbox-arrow-down" width="24" />
-                <div>Pengajuan Masuk</div>
+                <div class="flex items-center gap-3">
+                    <Icon icon="mdi:inbox-arrow-down" width="24" />
+                    <div>Pengajuan Masuk</div>
+                </div>
+                <span
+                    v-if="supervisorNotifications?.pengajuan_masuk_pending > 0"
+                    class="bg-yellow-500 text-black text-xs font-bold px-2 py-0.5 rounded-full"
+                >
+                    {{ supervisorNotifications.pengajuan_masuk_pending }}
+                </span>
             </Link>
 
             <!-- Akun Pembimbing -->
@@ -100,35 +114,71 @@ const isLinkActive = (routeName) => {
                 <div>Data Jurnal</div>
             </Link>
 
-            <!-- Absensi Harian -->
-            <Link
-                :href="route('data-absensi-harian.index')"
+            <!-- Dropdown Laporan Absensi -->
+            <v-btn
+                variant="text"
+                @click="openLaporan = !openLaporan"
                 :class="{
-                    'bg-[#4A60AA]!': isLinkActive('data-absensi-harian.index'),
-                    'hover:bg-[#2C48A5]! ': !isLinkActive(
-                        'data-absensi-harian.index'
+                    'bg-[#4A60AA]!':
+                        isLinkActive('data-absensi-harian.index') ||
+                        isLinkActive('data-absensi-bulanan.index'),
+                    'hover:bg-[#2C48A5]!': !(
+                        isLinkActive('data-absensi-harian.index') ||
+                        isLinkActive('data-absensi-bulanan.index')
                     ),
                 }"
-                class="text-white font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
+                class="font-medium! transition duration-150 flex items-center justify-between w-full px-3 py-2 rounded-md"
             >
-                <Icon icon="mdi:clock-check" width="24" />
-                <div>Absensi Harian</div>
-            </Link>
+                <div class="flex text-white items-center gap-3">
+                    <Icon icon="mdi:chart-bar" width="24" />
+                    <div>Laporan Absensi</div>
+                </div>
+                <Icon
+                    :icon="openLaporan ? 'mdi:chevron-up' : 'mdi:chevron-down'"
+                    class="text-white"
+                    width="20"
+                />
+            </v-btn>
+            <transition name="fade-slide">
+                <div
+                    v-if="openLaporan"
+                    class="ml-6 mt-1 space-y-1 border-[#4A60AA] pl-3"
+                >
+                    <!-- Absensi Harian -->
+                    <Link
+                        :href="route('data-absensi-harian.index')"
+                        :class="{
+                            'bg-[#4A60AA]!': isLinkActive(
+                                'data-absensi-harian.index'
+                            ),
+                            'hover:bg-[#2C48A5]!': !isLinkActive(
+                                'data-absensi-harian.index'
+                            ),
+                        }"
+                        class="text-white font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
+                    >
+                        <Icon icon="mdi:clock-check" width="20" />
+                        <div>Harian</div>
+                    </Link>
 
-            <!-- Rekap Absensi Bulanan -->
-            <Link
-                :href="route('data-absensi-bulanan.index')"
-                :class="{
-                    'bg-[#4A60AA]!': isLinkActive('data-absensi-bulanan.index'),
-                    'hover:bg-[#2C48A5]! ': !isLinkActive(
-                        'data-absensi-bulanan.index'
-                    ),
-                }"
-                class="text-white font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
-            >
-                <Icon icon="mdi:calendar-check" width="24" />
-                <div>Rekap Absensi</div>
-            </Link>
+                    <!-- Rekap Absensi Bulanan -->
+                    <Link
+                        :href="route('data-absensi-bulanan.index')"
+                        :class="{
+                            'bg-[#4A60AA]!': isLinkActive(
+                                'data-absensi-bulanan.index'
+                            ),
+                            'hover:bg-[#2C48A5]!': !isLinkActive(
+                                'data-absensi-bulanan.index'
+                            ),
+                        }"
+                        class="text-white font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
+                    >
+                        <Icon icon="mdi:calendar-check" width="20" />
+                        <div>Bulanan</div>
+                    </Link>
+                </div>
+            </transition>
         </template>
         <template #content>
             <slot />
@@ -138,3 +188,15 @@ const isLinkActive = (routeName) => {
         </template>
     </DashboardLayout>
 </template>
+
+<style scoped>
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+    transition: all 0.2s ease;
+}
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+</style>

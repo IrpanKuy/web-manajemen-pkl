@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\supervisor;
 
+use App\Exports\SupervisorAbsensiBulananExport;
 use App\Http\Controllers\Controller;
 use App\Models\Instansi\MitraIndustri;
 use App\Models\Instansi\PklPlacement;
@@ -10,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DataAbsensiBulananController extends Controller
 {
@@ -91,4 +93,16 @@ class DataAbsensiBulananController extends Controller
             'bulan' => $bulan,
         ]);
     }
+
+    /**
+     * Export rekap absensi bulanan ke Excel
+     */
+    public function export(Request $request)
+    {
+        $bulan = $request->bulan ?? Carbon::now()->format('Y-m');
+        $filename = 'rekap_absensi_' . $bulan . '.xlsx';
+
+        return Excel::download(new SupervisorAbsensiBulananExport($bulan), $filename);
+    }
 }
+

@@ -32,6 +32,15 @@ watch(filterTanggal, (newValue) => {
     );
 });
 
+// --- EXPORT ---
+const handleExport = () => {
+    const params = new URLSearchParams();
+    if (filterTanggal.value) params.append("tanggal", filterTanggal.value);
+
+    window.location.href =
+        route("data-absensi-harian.export") + "?" + params.toString();
+};
+
 // --- HELPERS ---
 const getStatusColor = (status) => {
     if (status === "hadir") return "success";
@@ -81,10 +90,19 @@ const title = [
         </template>
 
         <v-card class="pa-4 border border-gray-700" elevation="2" rounded="lg">
-            <v-card-title>
-                <h3 class="text-lg md:text-xl mb-2 font-bold text-wrap">
+            <v-card-title
+                class="d-flex justify-space-between align-center flex-wrap"
+            >
+                <h3 class="text-lg md:text-xl font-bold text-wrap">
                     Absensi Harian - {{ formatDate(props.tanggal) }}
                 </h3>
+                <v-btn
+                    color="success"
+                    prepend-icon="mdi-file-excel"
+                    @click="handleExport"
+                >
+                    Export Excel
+                </v-btn>
             </v-card-title>
 
             <!-- SUMMARY -->

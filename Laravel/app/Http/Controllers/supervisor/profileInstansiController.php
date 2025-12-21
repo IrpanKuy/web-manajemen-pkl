@@ -4,6 +4,7 @@ namespace App\Http\Controllers\supervisor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Instansi\MitraIndustri;
+use App\Models\Instansi\PklPlacement;
 use App\Models\Pendamping\Jurusan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,10 +21,16 @@ class profileInstansiController extends Controller
     {
         $id = Auth::user()->id;
         $instansi = MitraIndustri::where('supervisors_id', $id)->with('pendamping:id,name')->first();
-        // dd($instansi);
+        
+        // Hitung jumlah PKL placement aktif
+        $activePlacementCount = PklPlacement::where('mitra_industri_id', $instansi->id)
+            ->where('status', 'berjalan')
+            ->count();
+            
         return Inertia::render('supervisors/profile-instansi', [
             'mitra' => $instansi,
-            'jurusans' => Jurusan::select('id', 'nama_jurusan')->get(), 
+            'jurusans' => Jurusan::select('id', 'nama_jurusan')->get(),
+            'activePlacementCount' => $activePlacementCount,
         ]);
     }
 
@@ -64,7 +71,20 @@ class profileInstansiController extends Controller
      */
     public function update(Request $request, string $id)
     {
-         $mitraIndustri = MitraIndustri::findOrFail($id);
+        $mitraIndustri = MitraIndustri::findOrFail($id);
+        
+        // Hitung jumlah PKL placement aktif
+        $activePlacementCount = PklPlacement::where('mitra_industri_id', $id)
+            ->where('status', 'berjalan')
+            ->count();
+        
+        // Validasi kuota tidak boleh lebih kecil dari jumlah placement aktif
+        if ($request->kuota < $activePlacementCount) {
+            return redirect()->back()->withErrors([
+                'kuota' => "Kuota tidak dapat dikurangi menjadi {$request->kuota}. Saat ini ada {$activePlacementCount} siswa PKL aktif."
+            ]);
+        }
+        
         $request->validate([
             // Validasi Mitra
             'nama_instansi' => 'required|string|max:255',
@@ -76,21 +96,20 @@ class profileInstansiController extends Controller
             'jurusan_ids' => 'required|array', // Array ID Jurusan
             'jurusan_ids.*' => 'exists:jurusans,id',
             'tanggal_masuk' => 'required|date',
-
         ]);
 
-            // 1. Update Mitra
+        // 1. Update Mitra
         $mitraIndustri->update([
-                'pendamping_id' => $request->pendamping_id,
-                'supervisors_id' => $request->supervisors_id,
-                'nama_instansi' => $request->nama_instansi,
-                'deskripsi' => $request->deskripsi,
-                'bidang_usaha' => $request->bidang_usaha,
-                'jam_masuk' => $request->jam_masuk,
-                'jam_pulang' => $request->jam_pulang,
-                'kuota' => $request->kuota,
-                'jurusan_ids' => $request->jurusan_ids,
-                'tanggal_masuk' => $request->tanggal_masuk
+            'pendamping_id' => $request->pendamping_id,
+            'supervisors_id' => $request->supervisors_id,
+            'nama_instansi' => $request->nama_instansi,
+            'deskripsi' => $request->deskripsi,
+            'bidang_usaha' => $request->bidang_usaha,
+            'jam_masuk' => $request->jam_masuk,
+            'jam_pulang' => $request->jam_pulang,
+            'kuota' => $request->kuota,
+            'jurusan_ids' => $request->jurusan_ids,
+            'tanggal_masuk' => $request->tanggal_masuk
         ]);
 
         return redirect()->route('profile-instansi.index')

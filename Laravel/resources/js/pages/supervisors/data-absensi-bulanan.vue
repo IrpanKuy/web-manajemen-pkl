@@ -36,6 +36,15 @@ watch(filterBulan, (newValue) => {
     );
 });
 
+// --- EXPORT ---
+const handleExport = () => {
+    const params = new URLSearchParams();
+    if (filterBulan.value) params.append("bulan", filterBulan.value);
+
+    window.location.href =
+        route("data-absensi-bulanan.export") + "?" + params.toString();
+};
+
 // --- HELPERS ---
 const getPersentaseColor = (persentase) => {
     if (persentase >= 90) return "success";
@@ -72,10 +81,19 @@ const title = [
         </template>
 
         <v-card class="pa-4 border border-gray-700" elevation="2" rounded="lg">
-            <v-card-title>
-                <h3 class="text-lg md:text-xl mb-2 font-bold text-wrap">
+            <v-card-title
+                class="d-flex justify-space-between align-center flex-wrap"
+            >
+                <h3 class="text-lg md:text-xl font-bold text-wrap">
                     Rekap Absensi Bulanan - {{ formatBulan(props.bulan) }}
                 </h3>
+                <v-btn
+                    color="success"
+                    prepend-icon="mdi-file-excel"
+                    @click="handleExport"
+                >
+                    Export Excel
+                </v-btn>
             </v-card-title>
 
             <!-- SUMMARY -->

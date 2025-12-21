@@ -205,18 +205,14 @@ const title = [
                         <v-btn
                             icon="mdi-pencil"
                             color="amber"
-                            size="x-small"
-                            variant="tonal"
+                            size="small"
                             @click="openEditModal(item)"
-                            v-tooltip:top="'Edit Data'"
                         ></v-btn>
                         <v-btn
                             icon="mdi-delete"
                             color="red"
-                            size="x-small"
-                            variant="tonal"
+                            size="small"
                             @click="deleteItem(item.id)"
-                            v-tooltip:top="'Hapus Data'"
                         ></v-btn>
                     </div>
                 </template>

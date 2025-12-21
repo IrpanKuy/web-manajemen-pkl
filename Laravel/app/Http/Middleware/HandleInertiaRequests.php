@@ -3,8 +3,10 @@
 namespace App\Http\Middleware;
 
 use App\Models\Approval\MentorRequest;
+use App\Models\Approval\PengajuanMasukSiswa;
 use App\Models\Approval\PengajuanPengeluaranSiswa;
 use App\Models\Instansi\JurnalHarian;
+use App\Models\Instansi\MitraIndustri;
 use App\Models\Instansi\PklPlacement;
 use App\Models\Siswa\Izin;
 use Illuminate\Http\Request;
@@ -93,6 +95,27 @@ class HandleInertiaRequests extends Middleware
 
                 return [
                     'pengajuan_pengeluaran_pending' => PengajuanPengeluaranSiswa::where('status', 'pending')->count(),
+                ];
+            },
+
+            // Notification badges untuk supervisor
+            'supervisorNotifications' => function () use ($request) {
+                $user = $request->user();
+                if (!$user || $user->role !== 'supervisor') {
+                    return null;
+                }
+
+                // Cari mitra yang dimiliki supervisor ini
+                $mitra = MitraIndustri::where('supervisors_id', $user->id)->first();
+                
+                if (!$mitra) {
+                    return ['pengajuan_masuk_pending' => 0];
+                }
+
+                return [
+                    'pengajuan_masuk_pending' => PengajuanMasukSiswa::where('mitra_id', $mitra->id)
+                        ->where('status', 'pending')
+                        ->count(),
                 ];
             },
         ];
