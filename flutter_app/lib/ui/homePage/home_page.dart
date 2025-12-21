@@ -9,6 +9,7 @@ import 'package:dio/dio.dart'; // Import Dio for errors
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_app/data/models/request/absensi_request.dart';
 import 'package:flutter_app/ui/homePage/card_view.dart';
+import 'package:flutter_app/ui/jurnal/form_jurnal_bottom_sheet.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -154,18 +155,138 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _handleIsiJurnal() async {
-    // Navigasi ke halaman isi jurnal
-    // Navigator.pushNamed(context, '/isi_jurnal'); // Contoh
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Fitur Isi Jurnal diklik")),
+    // Tampilkan bottom sheet form jurnal
+    await FormJurnalBottomSheet.show(
+      context,
+      onSuccess: () {
+        // Reload home page data setelah jurnal dibuat
+        _loadHomePageData();
+      },
     );
   }
 
   Future<void> _handleAbsenKeluar() async {
-    // Logic absen keluar (mungkin scan QR juga atau tombol langsung)
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Fitur Absen Keluar diklik")),
+    // Absen pulang menggunakan logic yang sama dengan absen masuk
+    // Backend otomatis menentukan ini absen pulang berdasarkan jam_masuk yang sudah terisi
+
+    // Tampilkan dialog konfirmasi
+    bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF8B5CF6).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.logout_rounded, color: Color(0xFF8B5CF6)),
+            ),
+            const SizedBox(width: 12),
+            const Text("Absen Pulang"),
+          ],
+        ),
+        content: const Text(
+          "Anda akan melakukan absen pulang. Pastikan Anda sudah berada di lokasi PKL dan siap untuk scan QR Code.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF8B5CF6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text("Scan QR", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
     );
+
+    if (confirm != true) return;
+
+    // 1. Cek dan minta permission lokasi
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      _showErrorDialog(
+          "Layanan lokasi tidak aktif. Aktifkan GPS Anda untuk absen pulang.");
+      return;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        _showErrorDialog("Izin lokasi ditolak. Tidak bisa melakukan absensi.");
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      _showErrorDialog(
+          "Izin lokasi ditolak permanen. Silakan ubah di pengaturan.");
+      return;
+    }
+
+    // 2. Ambil Lokasi
+    _showLoadingDialog(); // Loading saat ambil lokasi
+    Position? position;
+    try {
+      position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      Navigator.pop(context); // Tutup loading lokasi
+    } catch (e) {
+      Navigator.pop(context);
+      _showErrorDialog("Gagal mengambil lokasi: $e");
+      return;
+    }
+
+    // 3. Scan QR Code
+    try {
+      var res = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const SimpleBarcodeScannerPage(
+              isShowFlashIcon: true,
+            ),
+          ));
+
+      if (res is String && res != '-1' && res.isNotEmpty) {
+        // Tampilkan loading dialog kirim data
+        _showLoadingDialog();
+
+        try {
+          // Kirim ke API dengan Data Lokasi Real
+          var response = await _homePageClient.postAbsensi(
+            AbsensiRequest(
+              qrValue: res,
+              latitude: position.latitude,
+              longitude: position.longitude,
+            ),
+          );
+
+          Navigator.pop(context); // Tutup loading
+          _showSuccessDialog(response.message);
+          _loadHomePageData(); // Reload data
+        } catch (e) {
+          Navigator.pop(context); // Tutup loading
+          String errorMessage = "Gagal melakukan absen pulang.";
+          if (e is DioException) {
+            errorMessage = e.response?.data['message'] ?? errorMessage;
+          }
+          _showErrorDialog(errorMessage);
+        }
+      }
+    } catch (e) {
+      print("Error scanning: $e");
+    }
   }
 
   // --- Helper Dialogs ---

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/history_service.dart';
 import '../data/models/jurnal_model.dart';
 import 'package:logger/logger.dart';
+import 'package:flutter_app/ui/jurnal/detail_jurnal_page.dart';
 
 class RekapJurnal extends StatefulWidget {
   const RekapJurnal({super.key});
@@ -264,73 +265,83 @@ class _RekapJurnalState extends State<RekapJurnal> {
   }
 
   Widget _buildListItem(Jurnal item) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetailJurnalPage(jurnal: item),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Date Box
-          Container(
-            width: 50,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF2F4F7), // Light greyish blue
-              borderRadius: BorderRadius.circular(8),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-            child: Column(
-              children: [
-                Text(
-                  _getDateMonthShort(item.tanggal),
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF667085),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Date Box
+            Container(
+              width: 50,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF2F4F7), // Light greyish blue
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    _getDateMonthShort(item.tanggal),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF667085),
+                    ),
                   ),
-                ),
-                Text(
-                  _getDateDay(item.tanggal),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF101828),
+                  Text(
+                    _getDateDay(item.tanggal),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF101828),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.judul,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: Color(0xFF101828),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.judul,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Color(0xFF101828),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                _buildStatusBadge(item.status),
-              ],
+                  const SizedBox(height: 8),
+                  _buildStatusBadge(item.status),
+                ],
+              ),
             ),
-          ),
-          const Icon(Icons.chevron_right, color: Colors.grey),
-        ],
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }

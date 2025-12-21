@@ -28,6 +28,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // History Routes
     Route::get('/absensi/history', [AbsensiController::class, 'history']);
     Route::get('/jurnal', [\App\Http\Controllers\Api\JurnalController::class, 'index']);
+    Route::get('/jurnal/{id}', [\App\Http\Controllers\Api\JurnalController::class, 'show']);
+    Route::post('/jurnal', [\App\Http\Controllers\Api\JurnalController::class, 'store']);
 
     
 
