@@ -14,8 +14,8 @@ class Absensi extends Model
         'tanggal',
         'jam_masuk',
         'jam_pulang',
-        'location_masuk', // PostGIS
-        'location_pulang', // PostGIS
+        // 'location_masuk', // PostGIS
+        // 'location_pulang', // PostGIS
         'status_kehadiran',
     ];
     

@@ -21,8 +21,8 @@ return new class extends Migration
         $table->time('jam_pulang')->nullable();
         
         // PostGIS
-        $table->geography('location_masuk', subtype: 'POINT', srid: 4326)->nullable();
-        $table->geography('location_pulang', subtype: 'POINT', srid: 4326)->nullable();
+        // $table->geography('location_masuk', subtype: 'POINT', srid: 4326)->nullable();
+        // $table->geography('location_pulang', subtype: 'POINT', srid: 4326)->nullable();
         
         $table->enum('status_kehadiran', ['hadir', 'telat', 'izin', 'sakit', 'alpha', 'pending'])->default('pending');
         $table->timestamps();

@@ -76,48 +76,70 @@ class AbsensiController extends Controller
         //     ], 400);
         // }
 
-        // 4. Cek apakah sudah absen hari ini
+        // 4. Cek apakah sudah ada absensi hari ini
         $existingAbsensi = Absensi::where('profile_siswa_id', $user->siswas->id)
-            ->whereDate('created_at', now()->toDateString())
+            ->whereDate('tanggal', now()->toDateString())
             ->first();
 
-        if ($existingAbsensi) {
-            // Jika sudah absen masuk, mungkin ini absen pulang? (Logic sederhana dulu: absen masuk hanya sekali)
-            if ($existingAbsensi->jam_pulang == null) {
-                // Update Absen Pulang
-                $existingAbsensi->update([
-                    'jam_masuk' => now(),
-                    // Update lokasi pulang jika perlu?
-                ]);
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Berhasil absen pulang!',
-                    'data' => $existingAbsensi
-                ]);
-            }
-            
+        // Return error jika tidak ada absensi yang ditemukan
+        if (!$existingAbsensi) {
             return response()->json([
                 'success' => false,
-                'message' => 'Anda sudah melakukan absensi lengkap hari ini.',
-            ], 400);
+                'message' => 'Tidak ada data absensi untuk hari ini. Hubungi admin untuk membuat jadwal absensi.',
+            ], 404);
         }
 
-        // 5. Simpan Absensi Masuk
-        $absensi = Absensi::create([
-            'pkl_placement_id' => $placement->id,
-            'status' => 'hadir',
-            'jam_masuk' => now(),
-            // 'jam_pulang' => null,
-            // 'keterangan' => '',
-            // 'foto_bukti' => '', // Jika ada fitur foto
-        ]);
+        // 5. Cek apakah ini absen masuk atau absen pulang
+        if ($existingAbsensi->jam_masuk === null) {
+            // --- ABSEN MASUK ---
+            $now = now();
+            $jamMasukMitra = $mitra->jam_masuk; // Format: "HH:mm:ss"
+            
+            // Tentukan status kehadiran berdasarkan jam masuk mitra
+            $statusKehadiran = 'hadir';
+            if ($jamMasukMitra) {
+                $jamMasukTarget = \Carbon\Carbon::parse($now->format('Y-m-d') . ' ' . $jamMasukMitra);
+                if ($now->gt($jamMasukTarget)) {
+                    $statusKehadiran = 'telat';
+                }
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Berhasil absen masuk!',
-            'data' => $absensi,
-            'distance' => round($distance) . 'm'
-        ]);
+            $existingAbsensi->update([
+                'jam_masuk' => $now->format('H:i:s'),
+                'status_kehadiran' => $statusKehadiran,
+            ]);
+
+            $message = $statusKehadiran === 'telat' 
+                ? 'Anda terlambat! Jam masuk: ' . $jamMasukMitra . ', Anda absen: ' . $now->format('H:i:s')
+                : 'Berhasil absen masuk!';
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'status_kehadiran' => $statusKehadiran,
+                'data' => $existingAbsensi,
+                'distance' => round($distance) . 'm'
+            ]);
+
+        } elseif ($existingAbsensi->jam_pulang === null) {
+            // --- ABSEN PULANG ---
+            $existingAbsensi->update([
+                'jam_pulang' => now()->format('H:i:s'),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Berhasil absen pulang!',
+                'data' => $existingAbsensi,
+                'distance' => round($distance) . 'm'
+            ]);
+        } else {
+            // Sudah absen masuk dan pulang
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda sudah menyelesaikan absensi hari ini.',
+            ], 400);
+        }
     }
     public function history(Request $request)
     {

@@ -59,11 +59,13 @@ class HomePageDataController extends Controller
         // cek absensi
         if ($absensiHarian->jam_masuk === null) {
             $statusAbsensi = 'absenMasuk';
-        }elseif ($absensiHarian->jam_pulang === null && $jurnalHarian === null) {
+        } elseif ($absensiHarian->jam_pulang === null && $jurnalHarian === null) {
             $statusAbsensi = 'buatJurnal';
-        }else {
+        } elseif ($absensiHarian->jam_pulang === null && $jurnalHarian !== null) {
             $statusAbsensi = 'absenPulang';
-        };
+        } else {
+            $statusAbsensi = 'selesai';
+        }
         
         return response()->json([
             'success' => true,
