@@ -5,11 +5,14 @@ namespace App\Http\Controllers\pendamping;
 use App\Http\Controllers\Controller;
 use App\Models\Pendamping\Jurusan;
 use App\Models\User;
+use App\Exports\SiswaExport;
+use App\Imports\SiswaImport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DataSiswaController extends Controller
 {
@@ -118,5 +121,100 @@ class DataSiswaController extends Controller
     {
         User::findOrFail($id)->delete();
         return redirect()->route('data-siswa.index')->with('success', 'Siswa dihapus.');
+    }
+
+    /**
+     * Export data siswa ke Excel
+     */
+    public function export(Request $request)
+    {
+        $search = $request->get('search');
+        $jurusanId = $request->get('jurusan_id');
+        
+        $filename = 'data-siswa-' . date('Y-m-d-His') . '.xlsx';
+        
+        return Excel::download(new SiswaExport($search, $jurusanId), $filename);
+    }
+
+    /**
+     * Import data siswa dari Excel
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls|max:2048',
+        ], [
+            'file.required' => 'File Excel harus diupload',
+            'file.mimes' => 'File harus berformat Excel (.xlsx atau .xls)',
+            'file.max' => 'Ukuran file maksimal 2MB',
+        ]);
+
+        $import = new SiswaImport();
+        Excel::import($import, $request->file('file'));
+
+        if (count($import->errors) > 0) {
+            return redirect()->back()->with('error', implode('<br>', $import->errors));
+        }
+
+        return redirect()->route('data-siswa.index')
+            ->with('success', "Berhasil mengimport {$import->successCount} data siswa.");
+    }
+
+    /**
+     * Download template import Excel
+     */
+    public function downloadTemplate()
+    {
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Set headers
+        $headers = ['nama', 'email', 'no_hp', 'nisn', 'jurusan_id', 'password'];
+        $sheet->fromArray($headers, null, 'A1');
+        
+        // Style header row
+        $sheet->getStyle('A1:F1')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'color' => ['argb' => 'FFFFFFFF'],
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['argb' => 'FF4A60AA'],
+            ],
+        ]);
+        
+        // Add sample data
+        $sampleData = [
+            ['Ahmad Fauzi', 'ahmad@siswa.com', '081234567890', '1234567890', '1', 'password123'],
+            ['Budi Santoso', 'budi@siswa.com', '089876543210', '0987654321', '2', ''],
+        ];
+        $sheet->fromArray($sampleData, null, 'A2');
+        
+        // Add instructions in new sheet
+        $instructionSheet = $spreadsheet->createSheet();
+        $instructionSheet->setTitle('Petunjuk');
+        $instructionSheet->setCellValue('A1', 'PETUNJUK PENGISIAN:');
+        $instructionSheet->setCellValue('A2', '1. Kolom nama, email, nisn, jurusan_id WAJIB diisi');
+        $instructionSheet->setCellValue('A3', '2. Kolom no_hp dan password OPTIONAL');
+        $instructionSheet->setCellValue('A4', '3. Jika password kosong, akan menggunakan default: password123');
+        $instructionSheet->setCellValue('A5', '4. jurusan_id adalah ID jurusan (lihat daftar jurusan di aplikasi)');
+        $instructionSheet->setCellValue('A6', '5. Hapus baris contoh data sebelum import');
+        
+        // Auto size columns
+        foreach (range('A', 'F') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        
+        // Create writer and output
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $filename = 'template-import-siswa.xlsx';
+        
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        
+        $writer->save('php://output');
+        exit;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Approval\MentorRequest;
+use App\Models\Approval\PengajuanPengeluaranSiswa;
 use App\Models\Instansi\JurnalHarian;
 use App\Models\Instansi\PklPlacement;
 use App\Models\Siswa\Izin;
@@ -80,6 +81,18 @@ class HandleInertiaRequests extends Middleware
                     'mentor_request_pending' => MentorRequest::where('pembimbing_baru_id', $pembimbingId)
                         ->where('status', 'pending')
                         ->count(),
+                ];
+            },
+
+            // Notification badges untuk pendamping
+            'pendampingNotifications' => function () use ($request) {
+                $user = $request->user();
+                if (!$user || $user->role !== 'pendamping') {
+                    return null;
+                }
+
+                return [
+                    'pengajuan_pengeluaran_pending' => PengajuanPengeluaranSiswa::where('status', 'pending')->count(),
                 ];
             },
         ];

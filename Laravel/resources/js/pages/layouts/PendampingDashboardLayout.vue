@@ -12,6 +12,11 @@ const currentRouteName = computed(() => page.props.currentRoute.name);
 // Check if user is admin
 const isAdmin = computed(() => page.props.auth?.user?.is_admin || false);
 
+// Pendamping notifications badge count
+const pendampingNotifications = computed(
+    () => page.props.pendampingNotifications
+);
+
 // pengkondisian route
 const isLinkActive = (routeName) => {
     return currentRouteName.value === routeName;
@@ -134,11 +139,9 @@ const isLinkActive = (routeName) => {
                 :class="{
                     'bg-[#4A60AA]!':
                         isLinkActive('laporan-harian.index') ||
-                        isLinkActive('laporan-mingguan.index') ||
                         isLinkActive('laporan-bulanan.index'),
                     'hover:bg-[#2C48A5]! ':
                         !isLinkActive('laporan-harian.index') &&
-                        !isLinkActive('laporan-mingguan.index') &&
                         !isLinkActive('laporan-bulanan.index'),
                 }"
                 class="w-full text-lg text-white font-medium! transition duration-150 flex items-center justify-between px-3 py-2 rounded-md cursor-pointer"
@@ -179,23 +182,6 @@ const isLinkActive = (routeName) => {
                     >
                         <Icon icon="mdi:calendar-today" width="20" />
                         <div>Harian</div>
-                    </Link>
-
-                    <!-- Laporan Mingguan -->
-                    <Link
-                        :href="route('laporan-mingguan.index')"
-                        :class="{
-                            'bg-[#4A60AA]!': isLinkActive(
-                                'laporan-mingguan.index'
-                            ),
-                            'hover:bg-[#2C48A5]!': !isLinkActive(
-                                'laporan-mingguan.index'
-                            ),
-                        }"
-                        class="text-white font-medium! transition duration-150 flex items-center gap-3 px-4 py-2 rounded-md"
-                    >
-                        <Icon icon="mdi:calendar-week" width="20" />
-                        <div>Mingguan</div>
                     </Link>
 
                     <!-- Laporan Bulanan -->
@@ -271,10 +257,21 @@ const isLinkActive = (routeName) => {
                         'pengajuan-pengeluaran.index'
                     ),
                 }"
-                class="text-white font-medium! transition duration-150 flex items-center gap-3 px-3 py-2 rounded-md"
+                class="text-white font-medium! transition duration-150 flex items-center justify-between px-3 py-2 rounded-md"
             >
-                <Icon icon="mdi:account-remove" width="24" />
-                <div>Pengajuan Pengeluaran</div>
+                <div class="flex items-center gap-3">
+                    <Icon icon="mdi:account-remove" width="24" />
+                    <div>Pengajuan Pengeluaran</div>
+                </div>
+                <span
+                    v-if="
+                        pendampingNotifications?.pengajuan_pengeluaran_pending >
+                        0
+                    "
+                    class="bg-yellow-500 text-black text-xs font-bold px-2 py-0.5 rounded-full"
+                >
+                    {{ pendampingNotifications.pengajuan_pengeluaran_pending }}
+                </span>
             </Link>
         </template>
         <template #content>

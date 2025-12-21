@@ -1,12 +1,15 @@
 <script setup>
 import { onMounted, ref } from "vue";
+import { router } from "@inertiajs/vue3";
 import PendampingDashboardLayout from "../layouts/PendampingDashboardLayout.vue";
+import Swal from "sweetalert2";
 
 // --- PROPS ---
 const props = defineProps({
     summary: Object,
     absensiChart: Object,
     izinTerbaru: Array,
+    pengajuanPengeluaranTerbaru: Array,
 });
 
 // --- CHART REF ---
@@ -18,21 +21,29 @@ const izinHeaders = [
     { title: "Siswa", key: "siswa_info" },
     { title: "Tanggal", key: "tanggal" },
     { title: "Durasi", key: "durasi_hari", align: "center" },
-    { title: "Keterangan", key: "keterangan" },
     { title: "Status", key: "status", align: "center" },
-    { title: "Diproses Oleh", key: "approver" },
+];
+
+// --- PENGAJUAN PENGELUARAN TABLE HEADERS ---
+const pengeluaranHeaders = [
+    { title: "Siswa", key: "siswa_info" },
+    { title: "Mitra", key: "mitra" },
+    { title: "Alasan", key: "alasan" },
+    { title: "Status", key: "status", align: "center" },
+    { title: "Aksi", key: "actions", align: "center", sortable: false },
 ];
 
 // --- HELPERS ---
 const getStatusColor = (status) => {
     if (status === "approved") return "success";
-    if (status === "rejected") return "error";
+    if (status === "rejected" || status === "ditolak") return "error";
+    if (status === "diterima") return "success";
     return "warning";
 };
 
 const getStatusLabel = (status) => {
-    if (status === "approved") return "Disetujui";
-    if (status === "rejected") return "Ditolak";
+    if (status === "approved" || status === "diterima") return "Disetujui";
+    if (status === "rejected" || status === "ditolak") return "Ditolak";
     return "Pending";
 };
 
@@ -41,6 +52,72 @@ const formatDate = (date) => {
         year: "numeric",
         month: "short",
         day: "numeric",
+    });
+};
+
+// --- PENGAJUAN PENGELUARAN ACTIONS ---
+const handleApprove = (item) => {
+    Swal.fire({
+        title: "Setujui Pengeluaran?",
+        html: `
+            <p>Anda yakin ingin menyetujui pengeluaran siswa <strong>${item.siswa?.user?.name}</strong>?</p>
+            <p class="text-red-500 mt-2"><strong>Perhatian:</strong> Status PKL siswa akan diubah menjadi GAGAL.</p>
+        `,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#22c55e",
+        cancelButtonColor: "#6b7280",
+        confirmButtonText: "Ya, Setujui",
+        cancelButtonText: "Batal",
+    }).then((result) => {
+        if (result.isConfirmed) {
+            router.post(
+                route("pengajuan-pengeluaran.approve", item.id),
+                {},
+                {
+                    onSuccess: () => {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Berhasil!",
+                            text: "Pengajuan pengeluaran telah disetujui.",
+                            timer: 2000,
+                            showConfirmButton: false,
+                        });
+                    },
+                }
+            );
+        }
+    });
+};
+
+const handleReject = (item) => {
+    Swal.fire({
+        title: "Tolak Pengeluaran?",
+        html: `Anda yakin ingin menolak pengeluaran siswa <strong>${item.siswa?.user?.name}</strong>?`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#ef4444",
+        cancelButtonColor: "#6b7280",
+        confirmButtonText: "Ya, Tolak",
+        cancelButtonText: "Batal",
+    }).then((result) => {
+        if (result.isConfirmed) {
+            router.post(
+                route("pengajuan-pengeluaran.reject", item.id),
+                {},
+                {
+                    onSuccess: () => {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Berhasil!",
+                            text: "Pengajuan pengeluaran telah ditolak.",
+                            timer: 2000,
+                            showConfirmButton: false,
+                        });
+                    },
+                }
+            );
+        }
     });
 };
 
@@ -334,15 +411,6 @@ const title = [
                                 </v-chip>
                             </template>
 
-                            <template v-slot:item.keterangan="{ item }">
-                                <div
-                                    style="max-width: 150px"
-                                    class="text-truncate"
-                                >
-                                    {{ item.keterangan || "-" }}
-                                </div>
-                            </template>
-
                             <template v-slot:item.status="{ item }">
                                 <v-chip
                                     :color="getStatusColor(item.status)"
@@ -350,12 +418,6 @@ const title = [
                                 >
                                     {{ getStatusLabel(item.status) }}
                                 </v-chip>
-                            </template>
-
-                            <template v-slot:item.approver="{ item }">
-                                <span class="text-caption">{{
-                                    item.approver?.name || "-"
-                                }}</span>
                             </template>
 
                             <template v-slot:no-data>
@@ -367,6 +429,101 @@ const title = [
                     </v-card-text>
                 </v-card>
             </div>
+
+            <!-- PENGAJUAN PENGELUARAN TERBARU -->
+            <v-card class="pa-4" elevation="2" rounded="lg">
+                <v-card-title class="text-lg font-bold d-flex align-center">
+                    <v-icon class="mr-2" color="red">mdi-account-remove</v-icon>
+                    Pengajuan Pengeluaran Terbaru
+                    <v-chip
+                        v-if="
+                            props.pengajuanPengeluaranTerbaru?.filter(
+                                (p) => p.status === 'pending'
+                            ).length > 0
+                        "
+                        color="warning"
+                        size="small"
+                        class="ml-2"
+                    >
+                        {{
+                            props.pengajuanPengeluaranTerbaru?.filter(
+                                (p) => p.status === "pending"
+                            ).length
+                        }}
+                        Pending
+                    </v-chip>
+                </v-card-title>
+                <v-card-text>
+                    <v-data-table
+                        :headers="pengeluaranHeaders"
+                        :items="props.pengajuanPengeluaranTerbaru || []"
+                        class="elevation-0 border"
+                        density="compact"
+                        hide-default-footer
+                    >
+                        <template v-slot:item.siswa_info="{ item }">
+                            <div class="py-1">
+                                <div class="font-weight-medium">
+                                    {{ item.siswa?.user?.name || "N/A" }}
+                                </div>
+                                <div class="text-caption text-grey">
+                                    {{
+                                        item.siswa?.jurusan?.nama_jurusan || "-"
+                                    }}
+                                </div>
+                            </div>
+                        </template>
+
+                        <template v-slot:item.mitra="{ item }">
+                            {{ item.mitra?.nama_instansi || "-" }}
+                        </template>
+
+                        <template v-slot:item.alasan="{ item }">
+                            <div style="max-width: 250px" class="text-truncate">
+                                {{ item.alasan_pengeluaran || "-" }}
+                            </div>
+                        </template>
+
+                        <template v-slot:item.status="{ item }">
+                            <v-chip
+                                :color="getStatusColor(item.status)"
+                                size="x-small"
+                            >
+                                {{ getStatusLabel(item.status) }}
+                            </v-chip>
+                        </template>
+
+                        <template v-slot:item.actions="{ item }">
+                            <div
+                                v-if="item.status === 'pending'"
+                                class="d-flex gap-1"
+                            >
+                                <v-btn
+                                    color="success"
+                                    size="x-small"
+                                    variant="flat"
+                                    icon="mdi-check"
+                                    @click="handleApprove(item)"
+                                ></v-btn>
+                                <v-btn
+                                    color="error"
+                                    size="x-small"
+                                    variant="flat"
+                                    icon="mdi-close"
+                                    @click="handleReject(item)"
+                                ></v-btn>
+                            </div>
+                            <span v-else class="text-grey text-caption">-</span>
+                        </template>
+
+                        <template v-slot:no-data>
+                            <div class="pa-4 text-center text-grey">
+                                Tidak ada pengajuan pengeluaran
+                            </div>
+                        </template>
+                    </v-data-table>
+                </v-card-text>
+            </v-card>
         </div>
     </PendampingDashboardLayout>
 </template>

@@ -56,6 +56,16 @@ watch(search, () => {
 
 watch([filterBulan, filterPembimbing, filterMitra], applyFilters);
 
+// --- EXPORT FUNCTION ---
+const handleExport = () => {
+    const params = new URLSearchParams();
+    if (filterBulan.value) params.append("bulan", filterBulan.value);
+    if (filterMitra.value) params.append("mitra_id", filterMitra.value);
+
+    window.location.href =
+        route("laporan-bulanan.export") + "?" + params.toString();
+};
+
 // --- HELPERS ---
 const getPersentaseColor = (persentase) => {
     if (persentase >= 90) return "success";
@@ -89,10 +99,19 @@ const title = [
         </template>
 
         <v-card class="pa-4 border border-gray-700" elevation="2" rounded="lg">
-            <v-card-title>
-                <h3 class="text-lg md:text-xl mb-2 font-bold text-wrap">
+            <v-card-title
+                class="d-flex justify-space-between align-center flex-wrap"
+            >
+                <h3 class="text-lg md:text-xl font-bold text-wrap">
                     Laporan Absensi Bulanan - {{ formatBulan(props.bulan) }}
                 </h3>
+                <v-btn
+                    color="success"
+                    prepend-icon="mdi-file-excel"
+                    @click="handleExport"
+                >
+                    Export Excel
+                </v-btn>
             </v-card-title>
 
             <!-- SUMMARY -->

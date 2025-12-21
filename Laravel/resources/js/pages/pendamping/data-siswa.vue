@@ -9,12 +9,13 @@ const props = defineProps({
     siswas: Object,
     jurusans: Array, // Data Paginator
 });
-console.log(props.siswas);
-console.log(props.jurusans);
 
 // --- STATE LOKAL ---
 const dialog = ref(false);
 const isEditing = ref(false);
+const importDialog = ref(false);
+const importFile = ref(null);
+const importLoading = ref(false);
 
 // --- DEFINISI FORM INERTIA ---
 const form = useForm({
@@ -57,10 +58,68 @@ const filteredItems = computed(() => {
             (siswa) => siswa.siswas.jurusan_id === filterJurusan.value
         );
     }
-    console.log(props.siswas.data);
 
     return data;
 });
+
+// --- EXPORT FUNCTION ---
+const handleExport = () => {
+    // Build query params based on current filter
+    const params = new URLSearchParams();
+    if (search.value) params.append("search", search.value);
+    if (filterJurusan.value) params.append("jurusan_id", filterJurusan.value);
+
+    // Open export URL in new tab to download
+    window.location.href = route("data-siswa.export") + "?" + params.toString();
+};
+
+// --- IMPORT FUNCTIONS ---
+const openImportDialog = () => {
+    importFile.value = null;
+    importDialog.value = true;
+};
+
+const handleImport = () => {
+    if (!importFile.value) {
+        Swal.fire({
+            icon: "warning",
+            title: "File belum dipilih",
+            text: "Silakan pilih file Excel untuk diimport",
+        });
+        return;
+    }
+
+    importLoading.value = true;
+
+    const formData = new FormData();
+    formData.append("file", importFile.value);
+
+    router.post(route("data-siswa.import"), formData, {
+        forceFormData: true,
+        onSuccess: () => {
+            importDialog.value = false;
+            importFile.value = null;
+            importLoading.value = false;
+            Swal.fire({
+                icon: "success",
+                title: "Import Berhasil",
+                text: "Data siswa berhasil diimport",
+            });
+        },
+        onError: (errors) => {
+            importLoading.value = false;
+            Swal.fire({
+                icon: "error",
+                title: "Import Gagal",
+                html: Object.values(errors).join("<br>"),
+            });
+        },
+    });
+};
+
+const downloadTemplate = () => {
+    window.location.href = route("data-siswa.template");
+};
 
 // --- HEADER TABEL ---
 const headers = [
@@ -162,8 +221,20 @@ const deleteItem = (id) => {
         >
             <!-- HEADER: Tombol Tambah (Tanpa Search/Filter rumit) -->
             <div class="flex justify-end gap-3">
-                <v-btn color="green">Import</v-btn>
-                <v-btn color="green">Export Excel</v-btn>
+                <v-btn
+                    color="teal"
+                    prepend-icon="mdi-file-upload"
+                    @click="openImportDialog"
+                >
+                    Import
+                </v-btn>
+                <v-btn
+                    color="success"
+                    prepend-icon="mdi-file-excel"
+                    @click="handleExport"
+                >
+                    Export Excel
+                </v-btn>
                 <v-btn
                     color="primary"
                     prepend-icon="mdi-plus"
@@ -334,6 +405,67 @@ const deleteItem = (id) => {
                         @click="submit"
                     >
                         {{ isEditing ? "Simpan Perubahan" : "Simpan Siswa" }}
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- ================= MODAL IMPORT (DIALOG) ================= -->
+        <v-dialog v-model="importDialog" max-width="500px" persistent>
+            <v-card>
+                <v-card-title class="bg-teal text-white">
+                    <span class="text-h6">Import Data Siswa</span>
+                </v-card-title>
+
+                <v-card-text class="pt-4">
+                    <v-alert type="info" variant="toned" class="mb-4">
+                        <div class="font-weight-bold mb-1">
+                            Petunjuk Import:
+                        </div>
+                        <ol class="ml-4">
+                            <li>Download template terlebih dahulu</li>
+                            <li>Isi data sesuai format template</li>
+                            <li>Upload file Excel (.xlsx atau .xls)</li>
+                        </ol>
+                    </v-alert>
+
+                    <v-btn
+                        color="primary"
+                        variant="outlined"
+                        prepend-icon="mdi-download"
+                        class="mb-4"
+                        block
+                        @click="downloadTemplate"
+                    >
+                        Download Template
+                    </v-btn>
+
+                    <v-file-input
+                        v-model="importFile"
+                        label="Pilih File Excel"
+                        accept=".xlsx,.xls"
+                        prepend-icon="mdi-file-excel"
+                        variant="outlined"
+                        show-size
+                    ></v-file-input>
+                </v-card-text>
+
+                <v-card-actions class="pb-4 px-4">
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        color="grey-darken-1"
+                        variant="text"
+                        @click="importDialog = false"
+                    >
+                        Batal
+                    </v-btn>
+                    <v-btn
+                        color="teal"
+                        variant="flat"
+                        :loading="importLoading"
+                        @click="handleImport"
+                    >
+                        Import Data
                     </v-btn>
                 </v-card-actions>
             </v-card>

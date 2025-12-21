@@ -11,6 +11,7 @@ const props = defineProps({
 const getStatusColor = (status) => {
     if (status === "berjalan") return "success";
     if (status === "selesai") return "info";
+    if (status === "gagal") return "error";
     return "warning";
 };
 
@@ -22,6 +23,26 @@ const formatDate = (date) => {
         month: "long",
         day: "numeric",
     });
+};
+
+// Helper untuk menghitung grade dari nilai
+const calculateGrade = (nilai) => {
+    if (!nilai && nilai !== 0) return "-";
+    if (nilai >= 90) return "A";
+    if (nilai >= 80) return "B";
+    if (nilai >= 70) return "C";
+    if (nilai >= 60) return "D";
+    return "E";
+};
+
+// Helper untuk warna grade
+const getGradeColor = (nilai) => {
+    if (!nilai && nilai !== 0) return "grey";
+    if (nilai >= 90) return "success";
+    if (nilai >= 80) return "primary";
+    if (nilai >= 70) return "info";
+    if (nilai >= 60) return "warning";
+    return "error";
 };
 
 const title = [
@@ -349,6 +370,121 @@ const title = [
                     </v-card-text>
                 </v-card>
             </div>
+
+            <!-- NILAI PKL (hanya tampil jika status selesai) -->
+            <v-card
+                v-if="props.placement?.status === 'selesai'"
+                class="pa-6"
+                elevation="2"
+                rounded="lg"
+            >
+                <v-card-title class="d-flex align-center gap-3">
+                    <v-avatar color="teal" size="48">
+                        <v-icon size="24">mdi-trophy</v-icon>
+                    </v-avatar>
+                    <div>
+                        <h4 class="text-lg font-bold">Nilai PKL</h4>
+                        <div class="text-caption text-grey">
+                            Hasil evaluasi PKL siswa
+                        </div>
+                    </div>
+                </v-card-title>
+
+                <v-card-text class="mt-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Nilai Akhir -->
+                        <v-card
+                            :color="getGradeColor(props.placement?.nilai)"
+                            class="pa-6 text-center text-white"
+                            elevation="3"
+                        >
+                            <div class="text-h2 font-bold">
+                                {{ props.placement?.nilai ?? "-" }}
+                            </div>
+                            <div class="text-subtitle-1 mt-2">Nilai Akhir</div>
+                        </v-card>
+
+                        <!-- Grade -->
+                        <v-card
+                            class="pa-6 text-center border-2"
+                            :class="`border-${getGradeColor(
+                                props.placement?.nilai
+                            )}`"
+                            elevation="1"
+                        >
+                            <div
+                                class="text-h2 font-bold"
+                                :class="`text-${getGradeColor(
+                                    props.placement?.nilai
+                                )}`"
+                            >
+                                {{ calculateGrade(props.placement?.nilai) }}
+                            </div>
+                            <div class="text-subtitle-1 mt-2 text-grey">
+                                Grade
+                            </div>
+                        </v-card>
+
+                        <!-- Keterangan Grade -->
+                        <v-card class="pa-6" elevation="1">
+                            <div class="text-subtitle-2 text-grey mb-2">
+                                Keterangan Grade
+                            </div>
+                            <v-chip
+                                v-if="props.placement?.nilai >= 90"
+                                color="success"
+                                class="mb-1"
+                                >A: Sangat Baik (90-100)</v-chip
+                            >
+                            <v-chip
+                                v-else-if="props.placement?.nilai >= 80"
+                                color="primary"
+                                class="mb-1"
+                                >B: Baik (80-89)</v-chip
+                            >
+                            <v-chip
+                                v-else-if="props.placement?.nilai >= 70"
+                                color="info"
+                                class="mb-1"
+                                >C: Cukup (70-79)</v-chip
+                            >
+                            <v-chip
+                                v-else-if="props.placement?.nilai >= 60"
+                                color="warning"
+                                class="mb-1"
+                                >D: Kurang (60-69)</v-chip
+                            >
+                            <v-chip
+                                v-else-if="props.placement?.nilai"
+                                color="error"
+                                class="mb-1"
+                                >E: Sangat Kurang (&lt;60)</v-chip
+                            >
+                            <v-chip v-else color="grey" class="mb-1"
+                                >Belum ada nilai</v-chip
+                            >
+                        </v-card>
+                    </div>
+
+                    <!-- Komentar Supervisor -->
+                    <div
+                        v-if="props.placement?.komentar_supervisor"
+                        class="mt-6"
+                    >
+                        <h5
+                            class="text-lg font-semibold mb-3 flex items-center gap-2"
+                        >
+                            <v-icon color="teal">mdi-comment-text</v-icon>
+                            Komentar Supervisor
+                        </h5>
+                        <v-card class="pa-4 bg-grey-lighten-4" elevation="0">
+                            <p class="text-body-1 text-wrap">
+                                {{ props.placement?.komentar_supervisor }}
+                            </p>
+                        </v-card>
+                    </div>
+                </v-card-text>
+            </v-card>
         </div>
     </PendampingDashboardLayout>
 </template>

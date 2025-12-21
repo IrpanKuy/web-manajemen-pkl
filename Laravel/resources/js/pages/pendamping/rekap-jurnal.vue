@@ -20,6 +20,10 @@ const filterStatus = ref(props.filters?.status || null);
 const filterPembimbing = ref(props.filters?.pembimbing_id || null);
 const filterMitra = ref(props.filters?.mitra_id || null);
 
+// --- DETAIL DIALOG STATE ---
+const detailDialog = ref(false);
+const selectedJurnal = ref(null);
+
 // --- OPTIONS ---
 const statusOptions = [
     { value: null, title: "Semua Status" },
@@ -36,6 +40,7 @@ const headers = [
     { title: "Judul", key: "judul" },
     { title: "Pembimbing", key: "pembimbing" },
     { title: "Status", key: "status", align: "center" },
+    { title: "Aksi", key: "actions", align: "center", sortable: false },
 ];
 
 // --- FILTER ---
@@ -60,6 +65,12 @@ watch(search, () => {
 });
 
 watch([filterBulan, filterStatus, filterPembimbing, filterMitra], applyFilters);
+
+// --- DETAIL FUNCTION ---
+const openDetail = (item) => {
+    selectedJurnal.value = item;
+    detailDialog.value = true;
+};
 
 // --- HELPERS ---
 const getStatusColor = (status) => {
@@ -243,7 +254,120 @@ const title = [
                         {{ item.status || "pending" }}
                     </v-chip>
                 </template>
+
+                <template v-slot:item.actions="{ item }">
+                    <v-btn
+                        icon="mdi-eye"
+                        color="primary"
+                        size="small"
+                        variant="text"
+                        @click="openDetail(item)"
+                    ></v-btn>
+                </template>
             </v-data-table>
         </v-card>
+
+        <!-- DETAIL DIALOG -->
+        <v-dialog v-model="detailDialog" max-width="600px">
+            <v-card>
+                <v-card-title class="bg-primary text-white">
+                    <span class="text-h6">Detail Jurnal</span>
+                </v-card-title>
+
+                <v-card-text class="pt-4">
+                    <v-list lines="two" density="compact">
+                        <v-list-item>
+                            <v-list-item-title class="font-weight-bold"
+                                >Tanggal</v-list-item-title
+                            >
+                            <v-list-item-subtitle>{{
+                                selectedJurnal?.tanggal
+                                    ? formatDate(selectedJurnal.tanggal)
+                                    : "-"
+                            }}</v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item>
+                            <v-list-item-title class="font-weight-bold"
+                                >Siswa</v-list-item-title
+                            >
+                            <v-list-item-subtitle
+                                >{{
+                                    selectedJurnal?.siswa?.user?.name || "-"
+                                }}
+                                ({{
+                                    selectedJurnal?.siswa?.jurusan
+                                        ?.nama_jurusan || "-"
+                                }})</v-list-item-subtitle
+                            >
+                        </v-list-item>
+
+                        <v-list-item>
+                            <v-list-item-title class="font-weight-bold"
+                                >Judul</v-list-item-title
+                            >
+                            <v-list-item-subtitle>{{
+                                selectedJurnal?.judul || "-"
+                            }}</v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item>
+                            <v-list-item-title class="font-weight-bold"
+                                >Deskripsi</v-list-item-title
+                            >
+                            <v-list-item-subtitle class="text-wrap">{{
+                                selectedJurnal?.deskripsi || "-"
+                            }}</v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item>
+                            <v-list-item-title class="font-weight-bold"
+                                >Pembimbing</v-list-item-title
+                            >
+                            <v-list-item-subtitle>{{
+                                selectedJurnal?.pembimbing?.name || "-"
+                            }}</v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item>
+                            <v-list-item-title class="font-weight-bold"
+                                >Status</v-list-item-title
+                            >
+                            <v-list-item-subtitle>
+                                <v-chip
+                                    :color="
+                                        getStatusColor(selectedJurnal?.status)
+                                    "
+                                    size="small"
+                                    class="text-capitalize"
+                                >
+                                    {{ selectedJurnal?.status || "pending" }}
+                                </v-chip>
+                            </v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item v-if="selectedJurnal?.catatan_pembimbing">
+                            <v-list-item-title class="font-weight-bold"
+                                >Catatan Pembimbing</v-list-item-title
+                            >
+                            <v-list-item-subtitle class="text-wrap">{{
+                                selectedJurnal.catatan_pembimbing
+                            }}</v-list-item-subtitle>
+                        </v-list-item>
+                    </v-list>
+                </v-card-text>
+
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        color="primary"
+                        variant="flat"
+                        @click="detailDialog = false"
+                    >
+                        Tutup
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </PendampingDashboardLayout>
 </template>

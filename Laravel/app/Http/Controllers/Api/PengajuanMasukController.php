@@ -29,7 +29,7 @@ class PengajuanMasukController extends Controller
             'mitra_id' => 'required|exists:mitra_industris,id',
             'durasi' => 'required|integer|min:1',
             'deskripsi' => 'required|string',
-            'cv' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Image as per request
+            'cv' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Image as per request
         ]);
 
         if ($validator->fails()) {

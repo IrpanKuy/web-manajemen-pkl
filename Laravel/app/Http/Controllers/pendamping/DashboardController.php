@@ -4,6 +4,7 @@ namespace App\Http\Controllers\pendamping;
 
 use App\Http\Controllers\Controller;
 use App\Models\Approval\PengajuanMasukSiswa;
+use App\Models\Approval\PengajuanPengeluaranSiswa;
 use App\Models\Instansi\MitraIndustri;
 use App\Models\Instansi\PklPlacement;
 use App\Models\Siswa\Absensi;
@@ -64,6 +65,13 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+        // Pengajuan Pengeluaran terbaru (5 terakhir, prioritaskan pending)
+        $pengajuanPengeluaranTerbaru = PengajuanPengeluaranSiswa::with(['siswa.user', 'siswa.jurusan', 'mitra'])
+            ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
+            ->latest()
+            ->take(5)
+            ->get();
+
         return Inertia::render('pendamping/dashboard', [
             'summary' => [
                 'total_mitra' => $totalMitra,
@@ -75,6 +83,7 @@ class DashboardController extends Controller
             ],
             'absensiChart' => $absensiChart,
             'izinTerbaru' => $izinTerbaru,
+            'pengajuanPengeluaranTerbaru' => $pengajuanPengeluaranTerbaru,
         ]);
     }
 }

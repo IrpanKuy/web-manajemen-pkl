@@ -47,13 +47,18 @@ Route::prefix('pendamping')->middleware(['HasAuth', 'HasPendamping'])->group(fun
     Route::resource('jurusan', JurusanController::class);
     Route::resource('data-siswa', DataSiswaController::class);
     
+    // Data Siswa Import/Export
+    Route::get('data-siswa-export', [DataSiswaController::class, 'export'])->name('data-siswa.export');
+    Route::post('data-siswa-import', [DataSiswaController::class, 'import'])->name('data-siswa.import');
+    Route::get('data-siswa-template', [DataSiswaController::class, 'downloadTemplate'])->name('data-siswa.template');
+    
     // Manajemen Role - Only for Admin
     Route::resource('manajemen-role', manajemenRoleController::class)->middleware('IsAdmin');
     
     // Laporan Absensi
     Route::get('laporan-harian', [LaporanHarianController::class, 'index'])->name('laporan-harian.index');
-    Route::get('laporan-mingguan', [LaporanMingguanController::class, 'index'])->name('laporan-mingguan.index');
     Route::get('laporan-bulanan', [LaporanBulananController::class, 'index'])->name('laporan-bulanan.index');
+    Route::get('laporan-bulanan/export', [LaporanBulananController::class, 'export'])->name('laporan-bulanan.export');
     
     // Rekap Data
     Route::get('rekap-jurnal', [RekapJurnalController::class, 'index'])->name('rekap-jurnal.index');
