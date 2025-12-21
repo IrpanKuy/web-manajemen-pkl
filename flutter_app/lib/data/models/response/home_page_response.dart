@@ -43,7 +43,7 @@ class HomePageData {
 @JsonSerializable()
 class PenempatanData {
   final String? status;
-  final String? pembimbing;
+  final PembimbingData? pembimbing;
   @JsonKey(name: 'tgl_mulai')
   final String? tglMulai;
   @JsonKey(name: 'tgl_selesai')
@@ -62,6 +62,26 @@ class PenempatanData {
       _$PenempatanDataFromJson(json);
 
   Map<String, dynamic> toJson() => _$PenempatanDataToJson(this);
+}
+
+@JsonSerializable()
+class PembimbingData {
+  final int? id;
+  final String? name;
+  final String? email;
+  final String? phone;
+
+  PembimbingData({
+    this.id,
+    this.name,
+    this.email,
+    this.phone,
+  });
+
+  factory PembimbingData.fromJson(Map<String, dynamic> json) =>
+      _$PembimbingDataFromJson(json);
+
+  Map<String, dynamic> toJson() => _$PembimbingDataToJson(this);
 }
 
 @JsonSerializable()

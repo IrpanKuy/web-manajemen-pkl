@@ -46,7 +46,9 @@ Map<String, dynamic> _$HomePageDataToJson(HomePageData instance) =>
 PenempatanData _$PenempatanDataFromJson(Map<String, dynamic> json) =>
     PenempatanData(
       status: json['status'] as String?,
-      pembimbing: json['pembimbing'] as String?,
+      pembimbing: json['pembimbing'] == null
+          ? null
+          : PembimbingData.fromJson(json['pembimbing'] as Map<String, dynamic>),
       tglMulai: json['tgl_mulai'] as String?,
       tglSelesai: json['tgl_selesai'] as String?,
       mitra: json['mitra'] == null
@@ -61,6 +63,22 @@ Map<String, dynamic> _$PenempatanDataToJson(PenempatanData instance) =>
       'tgl_mulai': instance.tglMulai,
       'tgl_selesai': instance.tglSelesai,
       'mitra': instance.mitra,
+    };
+
+PembimbingData _$PembimbingDataFromJson(Map<String, dynamic> json) =>
+    PembimbingData(
+      id: (json['id'] as num?)?.toInt(),
+      name: json['name'] as String?,
+      email: json['email'] as String?,
+      phone: json['phone'] as String?,
+    );
+
+Map<String, dynamic> _$PembimbingDataToJson(PembimbingData instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'email': instance.email,
+      'phone': instance.phone,
     };
 
 MitraData _$MitraDataFromJson(Map<String, dynamic> json) => MitraData(

@@ -24,19 +24,19 @@ class AbsensiController extends Controller
 
         // 1. Cari Penempatan PKL Siswa yang Aktif
         // Asumsi: Siswa hanya punya 1 penempatan aktif di satu waktu
-        $placement = PklPlacement::where('siswa_id', $user->siswa->id)
+        $placement = PklPlacement::where('profile_siswa_id', $user->siswas->id)
             ->where('status', 'berjalan')
-            ->with(['mitraIndustri']) // Eager load mitra
+            ->with(['mitra']) // Eager load mitra
             ->first();
 
-        if (!$placement || !$placement->mitraIndustri) {
+        if (!$placement || !$placement->mitra) {
             return response()->json([
                 'success' => false,
                 'message' => 'Anda tidak memiliki penempatan PKL aktif.',
             ], 404);
         }
 
-        $mitra = $placement->mitraIndustri;
+        $mitra = $placement->mitra;
 
         // 2. Validasi QR Code
         if ($mitra->qr_value !== $request->qr_value) {
@@ -50,30 +50,34 @@ class AbsensiController extends Controller
         // Lokasi Mitra disimpan di kolom 'location' (geometry point)
         // Kita hitung jarak antara titik Mitra dengan LatLong input user
         $distanceQuery = DB::selectOne("
-            SELECT ST_DistanceSphere(
-                geometry(location), 
+        SELECT 
+            mitra_industris.id,
+            alamats.location, 
+            ST_DistanceSphere(
+                geometry(alamats.location), 
                 ST_MakePoint(?, ?)
             ) as distance
-            FROM mitra_industris
-            WHERE id = ?
-        ", [
-            $request->longitude, 
-            $request->latitude, 
-            $mitra->id
-        ]);
+        FROM mitra_industris
+        JOIN alamats ON alamats.mitra_industri_id = mitra_industris.id 
+        WHERE mitra_industris.id = ?
+    ", [
+        $request->longitude, 
+        $request->latitude, 
+        $mitra->id
+    ]);
 
         $distance = $distanceQuery->distance ?? 999999;
         $maxRadius = $mitra->radius_meter ?? 100; // Default 100m jika null
 
-        if ($distance > $maxRadius) {
-            return response()->json([
-                'success' => false,
-                'message' => "Anda berada di luar radius lokasi PKL. Jarak: " . round($distance) . "m (Maks: {$maxRadius}m)",
-            ], 400);
-        }
+        // if ($distance > $maxRadius) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => "Anda berada di luar radius lokasi PKL. Jarak: " . round($distance) . "m (Maks: {$maxRadius}m)",
+        //     ], 400);
+        // }
 
         // 4. Cek apakah sudah absen hari ini
-        $existingAbsensi = Absensi::where('pkl_placement_id', $placement->id)
+        $existingAbsensi = Absensi::where('profile_siswa_id', $user->siswas->id)
             ->whereDate('created_at', now()->toDateString())
             ->first();
 
@@ -82,7 +86,7 @@ class AbsensiController extends Controller
             if ($existingAbsensi->jam_pulang == null) {
                 // Update Absen Pulang
                 $existingAbsensi->update([
-                    'jam_pulang' => now(),
+                    'jam_masuk' => now(),
                     // Update lokasi pulang jika perlu?
                 ]);
                 return response()->json([

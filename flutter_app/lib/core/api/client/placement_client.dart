@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
+import 'package:flutter_app/data/models/response/placement_detail_response.dart';
 
 part 'placement_client.g.dart';
 
@@ -8,21 +9,5 @@ abstract class PlacementClient {
   factory PlacementClient(Dio dio, {String baseUrl}) = _PlacementClient;
 
   @GET("/placement/detail")
-  Future<PlacementResponse> getPlacementDetail();
-}
-
-class PlacementResponse {
-  final bool success;
-  final String? message;
-  final dynamic data;
-
-  PlacementResponse({required this.success, this.message, this.data});
-
-  factory PlacementResponse.fromJson(Map<String, dynamic> json) {
-    return PlacementResponse(
-      success: json['success'] ?? false,
-      message: json['message'],
-      data: json['data'],
-    );
-  }
+  Future<PlacementDetailResponse> getPlacementDetail();
 }

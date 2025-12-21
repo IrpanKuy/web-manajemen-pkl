@@ -6,6 +6,7 @@ import 'package:flutter_app/ui/rekap_absensi.dart';
 import 'package:flutter_app/ui/ganti_pembimbing.dart';
 import 'package:flutter_app/ui/lamaran.dart';
 import 'package:flutter_app/ui/tempatPkl/pencarian_mitra/pencarian_mitra.dart';
+import 'package:flutter_app/ui/tempatPkl/info_tempat.dart';
 import 'package:flutter_app/ui/izin/rekap_izin.dart';
 import 'package:flutter_app/ui/izin/form_izin.dart';
 
@@ -30,6 +31,7 @@ class MyApp extends StatelessWidget {
         '/rekap_absensi': (context) => const RekapAbsensi(),
         '/ganti_pembimbing': (context) => const GantiPembimbing(),
         '/pencarian_instansi': (context) => const PencarianMitraPage(),
+        '/info_tempat': (context) => const InfoTempatPage(),
         '/lamaran': (context) => const StatusLamaran(),
         '/rekap_izin': (context) => const RekapIzin(),
         '/form_izin': (context) => const FormIzin(),

@@ -425,7 +425,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(width: 10),
               _buildPillBadge(
                 Icons.person,
-                _penempatanData?.pembimbing ?? "Pembimbing Unknown",
+                _penempatanData?.pembimbing?.name ?? "Pembimbing Unknown",
               ),
             ],
           ),
@@ -687,7 +687,7 @@ class _HomePageState extends State<HomePage> {
             '/rekap_absensi'),
         if (_hasPklPlacement)
           _buildMenuItem(
-              "Info Tempat", Icons.business, Colors.purple, '/detail_mitra')
+              "Info Tempat", Icons.business, Colors.purple, '/info_tempat')
         else
           _buildMenuItem("Info Tempat", Icons.business, Colors.purple,
               '/pencarian_instansi'),

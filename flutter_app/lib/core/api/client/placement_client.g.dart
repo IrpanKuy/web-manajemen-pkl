@@ -19,13 +19,13 @@ class _PlacementClient implements PlacementClient {
   String? baseUrl;
 
   @override
-  Future<PlacementResponse> getPlacementDetail() async {
+  Future<PlacementDetailResponse> getPlacementDetail() async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _result = await _dio
-        .fetch<Map<String, dynamic>>(_setStreamType<PlacementResponse>(Options(
+    final _result = await _dio.fetch<Map<String, dynamic>>(
+        _setStreamType<PlacementDetailResponse>(Options(
       method: 'GET',
       headers: _headers,
       extra: _extra,
@@ -41,7 +41,7 @@ class _PlacementClient implements PlacementClient {
               _dio.options.baseUrl,
               baseUrl,
             ))));
-    final value = PlacementResponse.fromJson(_result.data!);
+    final value = PlacementDetailResponse.fromJson(_result.data!);
     return value;
   }
 
