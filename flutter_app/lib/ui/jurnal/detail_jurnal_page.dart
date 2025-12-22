@@ -1,21 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/data/models/jurnal_model.dart';
 import 'package:flutter_app/core/constants/api_constans.dart';
+import 'package:flutter_app/ui/jurnal/form_jurnal_bottom_sheet.dart';
 
-class DetailJurnalPage extends StatelessWidget {
+class DetailJurnalPage extends StatefulWidget {
   final Jurnal jurnal;
 
   const DetailJurnalPage({super.key, required this.jurnal});
+
+  @override
+  State<DetailJurnalPage> createState() => _DetailJurnalPageState();
+}
+
+class _DetailJurnalPageState extends State<DetailJurnalPage> {
+  late Jurnal _jurnal;
+
+  @override
+  void initState() {
+    super.initState();
+    _jurnal = widget.jurnal;
+  }
 
   String _formatDate(String dateStr) {
     try {
       DateTime date = DateTime.parse(dateStr);
       const months = [
-        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember'
       ];
       const days = [
-        'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'
+        'Senin',
+        'Selasa',
+        'Rabu',
+        'Kamis',
+        'Jumat',
+        'Sabtu',
+        'Minggu'
       ];
       String day = days[date.weekday - 1];
       String month = months[date.month - 1];
@@ -23,6 +53,23 @@ class DetailJurnalPage extends StatelessWidget {
     } catch (e) {
       return dateStr;
     }
+  }
+
+  void _showEditJurnalForm() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => FormJurnalBottomSheet(
+        isEdit: true,
+        jurnalId: _jurnal.id,
+        initialJudul: _jurnal.judul,
+        initialDeskripsi: _jurnal.deskripsi,
+        onSuccess: () {
+          Navigator.pop(context); // Close detail page after success
+        },
+      ),
+    );
   }
 
   @override
@@ -85,7 +132,7 @@ class DetailJurnalPage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _formatDate(jurnal.tanggal),
+                              _formatDate(_jurnal.tanggal),
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -103,7 +150,7 @@ class DetailJurnalPage extends StatelessWidget {
                           ],
                         ),
                       ),
-                      _buildStatusBadge(jurnal.status),
+                      _buildStatusBadge(_jurnal.status),
                     ],
                   ),
                 ],
@@ -146,7 +193,7 @@ class DetailJurnalPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    jurnal.judul,
+                    _jurnal.judul,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -179,7 +226,8 @@ class DetailJurnalPage extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.description, color: Colors.grey[600], size: 20),
+                      Icon(Icons.description,
+                          color: Colors.grey[600], size: 20),
                       const SizedBox(width: 8),
                       Text(
                         'Deskripsi Kegiatan',
@@ -193,7 +241,7 @@ class DetailJurnalPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    jurnal.deskripsi,
+                    _jurnal.deskripsi,
                     style: const TextStyle(
                       fontSize: 15,
                       color: Color(0xFF344054),
@@ -205,7 +253,8 @@ class DetailJurnalPage extends StatelessWidget {
             ),
 
             // Foto Section (jika ada)
-            if (jurnal.fotoKegiatan != null && jurnal.fotoKegiatan!.isNotEmpty) ...[
+            if (_jurnal.fotoKegiatan != null &&
+                _jurnal.fotoKegiatan!.isNotEmpty) ...[
               const SizedBox(height: 20),
               Container(
                 width: double.infinity,
@@ -226,7 +275,8 @@ class DetailJurnalPage extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.photo_camera, color: Colors.grey[600], size: 20),
+                        Icon(Icons.photo_camera,
+                            color: Colors.grey[600], size: 20),
                         const SizedBox(width: 8),
                         Text(
                           'Foto Kegiatan',
@@ -242,7 +292,7 @@ class DetailJurnalPage extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: Image.network(
-                        '${ApiConstants.baseUrl.replaceAll('/api', '')}/storage/${jurnal.fotoKegiatan}',
+                        '${ApiConstants.baseUrl.replaceAll('/api', '')}/storage/${_jurnal.fotoKegiatan}',
                         width: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
@@ -253,7 +303,8 @@ class DetailJurnalPage extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Center(
-                              child: Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                              child: Icon(Icons.broken_image,
+                                  size: 48, color: Colors.grey),
                             ),
                           );
                         },
@@ -264,60 +315,110 @@ class DetailJurnalPage extends StatelessWidget {
               ),
             ],
 
-            // Komentar Section (jika ada)
-            if (jurnal.komentar != null && jurnal.komentar!.isNotEmpty) ...[
+            // Alasan Revisi Pembimbing (jika status revisi)
+            if (_jurnal.alasanRevisiPembimbing != null &&
+                _jurnal.alasanRevisiPembimbing!.isNotEmpty) ...[
               const SizedBox(height: 20),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: jurnal.status == 'revisi' || jurnal.status == 'ditolak'
-                      ? const Color(0xFFFEF3F2)
-                      : const Color(0xFFECFDF3),
+                  color: const Color(0xFFFEF3F2),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: jurnal.status == 'revisi' || jurnal.status == 'ditolak'
-                        ? const Color(0xFFFECDCA)
-                        : const Color(0xFFABEFC6),
-                  ),
+                  border: Border.all(color: const Color(0xFFFECDCA)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    const Row(
                       children: [
-                        Icon(
-                          Icons.comment,
-                          color: jurnal.status == 'revisi' || jurnal.status == 'ditolak'
-                              ? const Color(0xFFB42318)
-                              : const Color(0xFF027A48),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
+                        Icon(Icons.warning_amber,
+                            color: Color(0xFFB42318), size: 20),
+                        SizedBox(width: 8),
                         Text(
-                          'Komentar Pembimbing',
+                          'Alasan Revisi dari Pembimbing',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: jurnal.status == 'revisi' || jurnal.status == 'ditolak'
-                                ? const Color(0xFFB42318)
-                                : const Color(0xFF027A48),
+                            color: Color(0xFFB42318),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      jurnal.komentar!,
-                      style: TextStyle(
+                      _jurnal.alasanRevisiPembimbing!,
+                      style: const TextStyle(
                         fontSize: 14,
-                        color: jurnal.status == 'revisi' || jurnal.status == 'ditolak'
-                            ? const Color(0xFFB42318)
-                            : const Color(0xFF027A48),
+                        color: Color(0xFFB42318),
                         height: 1.5,
                       ),
                     ),
                   ],
+                ),
+              ),
+            ],
+
+            // Komentar Pendamping Section (jika ada)
+            if (_jurnal.hasKomentarPendamping) ...[
+              const SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3E8FF),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                      color: const Color(0xFF9333EA).withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.comment, color: Color(0xFF9333EA), size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Komentar Pendamping',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF9333EA),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      _jurnal.komentarPendamping!,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF6B21A8),
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            // Tombol Ubah Jurnal (jika status revisi)
+            if (_jurnal.isRevisi) ...[
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _showEditJurnalForm,
+                  icon: const Icon(Icons.edit),
+                  label: const Text('Ubah & Kirim Ulang Jurnal'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1D3C8A),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -348,12 +449,11 @@ class DetailJurnalPage extends StatelessWidget {
         icon = Icons.access_time_filled;
         text = 'Pending';
         break;
-      case 'ditolak':
       case 'revisi':
         bgColor = const Color(0xFFFEF3F2);
         textColor = const Color(0xFFB42318);
-        icon = Icons.cancel;
-        text = 'Revisi';
+        icon = Icons.edit;
+        text = 'Perlu Revisi';
         break;
       default:
         bgColor = Colors.grey.shade100;

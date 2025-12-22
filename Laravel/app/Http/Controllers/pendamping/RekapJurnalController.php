@@ -9,6 +9,7 @@ use App\Models\Instansi\PklPlacement;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class RekapJurnalController extends Controller
@@ -21,28 +22,20 @@ class RekapJurnalController extends Controller
         $bulan = $request->bulan ?? Carbon::now()->format('Y-m');
         $tanggal = Carbon::parse($bulan);
 
-        // Ambil semua siswa yang memiliki PKL aktif
-        $placementsQuery = PklPlacement::where('status', 'berjalan')
-            ->with(['siswa.user', 'siswa.jurusan', 'mitra', 'pembimbing']);
+        // Query jurnal langsung berdasarkan mitra_id yang ada di jurnal
+        $jurnalsQuery = JurnalHarian::with(['siswa.user', 'siswa.jurusan', 'pembimbing', 'pendamping', 'mitra'])
+            ->whereMonth('tanggal', $tanggal->month)
+            ->whereYear('tanggal', $tanggal->year);
+
+        // Filter by mitra (dari kolom mitra_industri_id di jurnal)
+        if ($request->mitra_id) {
+            $jurnalsQuery->where('mitra_industri_id', $request->mitra_id);
+        }
 
         // Filter by pembimbing
         if ($request->pembimbing_id) {
-            $placementsQuery->where('pembimbing_id', $request->pembimbing_id);
+            $jurnalsQuery->where('pembimbing_id', $request->pembimbing_id);
         }
-
-        // Filter by mitra
-        if ($request->mitra_id) {
-            $placementsQuery->where('mitra_industri_id', $request->mitra_id);
-        }
-
-        $placements = $placementsQuery->get();
-        $siswaIds = $placements->pluck('profile_siswa_id');
-
-        // Query jurnal
-        $jurnalsQuery = JurnalHarian::whereIn('profile_siswa_id', $siswaIds)
-            ->with(['siswa.user', 'siswa.jurusan', 'pembimbing'])
-            ->whereMonth('tanggal', $tanggal->month)
-            ->whereYear('tanggal', $tanggal->year);
 
         // Filter search
         if ($request->search) {
@@ -59,13 +52,23 @@ class RekapJurnalController extends Controller
             $jurnalsQuery->where('status', $request->status);
         }
 
+        // Filter by komentar_pendamping
+        if ($request->has_komentar !== null && $request->has_komentar !== '') {
+            if ($request->has_komentar === '1' || $request->has_komentar === 'true') {
+                $jurnalsQuery->whereNotNull('komentar_pendamping')->where('komentar_pendamping', '!=', '');
+            } else {
+                $jurnalsQuery->where(function($q) {
+                    $q->whereNull('komentar_pendamping')->orWhere('komentar_pendamping', '');
+                });
+            }
+        }
+
         $jurnals = $jurnalsQuery->latest('tanggal')
             ->paginate(15)
             ->withQueryString();
 
-        // Summary
-        $allJurnals = JurnalHarian::whereIn('profile_siswa_id', $siswaIds)
-            ->whereMonth('tanggal', $tanggal->month)
+        // Summary - ambil semua jurnal untuk bulan ini
+        $allJurnals = JurnalHarian::whereMonth('tanggal', $tanggal->month)
             ->whereYear('tanggal', $tanggal->year)
             ->get();
 
@@ -74,11 +77,19 @@ class RekapJurnalController extends Controller
             'pending' => $allJurnals->where('status', 'pending')->count(),
             'disetujui' => $allJurnals->where('status', 'disetujui')->count(),
             'revisi' => $allJurnals->where('status', 'revisi')->count(),
+            'dengan_komentar' => $allJurnals->filter(function($j) { return !empty($j->komentar_pendamping); })->count(),
         ];
 
         // Get filter options
         $pembimbings = User::where('role', 'pembimbing')->where('is_active', true)->get(['id', 'name']);
-        $mitras = MitraIndustri::all(['id', 'nama_instansi']);
+        
+        // Ambil mitra yang ada di jurnal bulan ini
+        $mitraIds = JurnalHarian::whereMonth('tanggal', $tanggal->month)
+            ->whereYear('tanggal', $tanggal->year)
+            ->whereNotNull('mitra_industri_id')
+            ->distinct()
+            ->pluck('mitra_industri_id');
+        $mitras = MitraIndustri::whereIn('id', $mitraIds)->get(['id', 'nama_instansi']);
 
         return Inertia::render('pendamping/rekap-jurnal', [
             'jurnals' => $jurnals,
@@ -89,10 +100,31 @@ class RekapJurnalController extends Controller
                 'status' => $request->status,
                 'pembimbing_id' => $request->pembimbing_id,
                 'mitra_id' => $request->mitra_id,
+                'has_komentar' => $request->has_komentar,
                 'bulan' => $bulan,
             ],
             'pembimbings' => $pembimbings,
             'mitras' => $mitras,
         ]);
     }
+
+    /**
+     * Beri komentar pada jurnal
+     */
+    public function beriKomentar(Request $request, $id)
+    {
+        $request->validate([
+            'komentar_pendamping' => 'required|string|max:1000',
+        ]);
+
+        $jurnal = JurnalHarian::findOrFail($id);
+
+        $jurnal->update([
+            'komentar_pendamping' => $request->komentar_pendamping,
+            'pendamping_id' => Auth::id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Komentar berhasil ditambahkan!');
+    }
 }
+

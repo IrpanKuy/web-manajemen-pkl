@@ -3,9 +3,11 @@ class Jurnal {
   final String tanggal;
   final String judul;
   final String deskripsi;
-  final String status; // pending, disetujui, revisi/ditolak
+  final String status; // pending, disetujui, revisi
   final String? fotoKegiatan;
-  final String? komentar;
+  final String? alasanRevisiPembimbing;
+  final String? komentarPendamping;
+  final PendampingInfo? pendamping;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -16,7 +18,9 @@ class Jurnal {
     required this.deskripsi,
     required this.status,
     this.fotoKegiatan,
-    this.komentar,
+    this.alasanRevisiPembimbing,
+    this.komentarPendamping,
+    this.pendamping,
     this.createdAt,
     this.updatedAt,
   });
@@ -29,7 +33,11 @@ class Jurnal {
       deskripsi: json['deskripsi'] ?? '',
       status: json['status'] ?? 'pending',
       fotoKegiatan: json['foto_kegiatan'],
-      komentar: json['komentar'],
+      alasanRevisiPembimbing: json['alasan_revisi_pembimbing'],
+      komentarPendamping: json['komentar_pendamping'],
+      pendamping: json['pendamping'] != null
+          ? PendampingInfo.fromJson(json['pendamping'])
+          : null,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
           : null,
@@ -47,19 +55,53 @@ class Jurnal {
       'deskripsi': deskripsi,
       'status': status,
       'foto_kegiatan': fotoKegiatan,
-      'komentar': komentar,
+      'alasan_revisi_pembimbing': alasanRevisiPembimbing,
+      'komentar_pendamping': komentarPendamping,
     };
+  }
+
+  bool get hasKomentarPendamping =>
+      komentarPendamping != null && komentarPendamping!.isNotEmpty;
+  
+  bool get isRevisi => status.toLowerCase() == 'revisi';
+  
+  bool get isPending => status.toLowerCase() == 'pending';
+  
+  bool get isDisetujui => status.toLowerCase() == 'disetujui';
+}
+
+class PendampingInfo {
+  final int id;
+  final String name;
+
+  PendampingInfo({required this.id, required this.name});
+
+  factory PendampingInfo.fromJson(Map<String, dynamic> json) {
+    return PendampingInfo(
+      id: json['id'],
+      name: json['name'] ?? '',
+    );
   }
 }
 
 class JurnalSummary {
   final int totalJurnal;
+  final int denganKomentar;
+  final int tanpaKomentar;
 
-  JurnalSummary({required this.totalJurnal});
+  JurnalSummary({
+    required this.totalJurnal,
+    this.denganKomentar = 0,
+    this.tanpaKomentar = 0,
+  });
 
   factory JurnalSummary.fromJson(Map<String, dynamic> json) {
     return JurnalSummary(
       totalJurnal: json['total_jurnal'] ?? 0,
+      denganKomentar: json['dengan_komentar'] ?? 0,
+      tanpaKomentar: json['tanpa_komentar'] ?? 0,
     );
   }
 }
+
+

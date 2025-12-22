@@ -106,7 +106,10 @@ const isLinkActive = (routeName) => {
             <Link
                 :href="route('mitra-industri.index')"
                 :class="{
-                    'bg-[#4A60AA]!': isLinkActive('mitra-industri.index'),
+                    'bg-[#4A60AA]!':
+                        isLinkActive('mitra-industri.index') ||
+                        isLinkActive('mitra-industri.create') ||
+                        isLinkActive('mitra-industri.edit'),
                     'hover:bg-[#2C48A5]!': !isLinkActive(
                         'mitra-industri.index'
                     ),

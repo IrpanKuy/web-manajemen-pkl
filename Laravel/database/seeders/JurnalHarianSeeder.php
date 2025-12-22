@@ -51,10 +51,21 @@ class JurnalHarianSeeder extends Seeder
 
         // Status valid sesuai migration: pending, disetujui, revisi
         $statusList = ['pending', 'disetujui', 'disetujui', 'disetujui', 'revisi'];
-        $komentarList = [
-            'pending' => null,
-            'disetujui' => 'Good job! Lanjutkan.',
-            'revisi' => 'Mohon jelaskan lebih detail kegiatan yang dilakukan.',
+        
+        // Alasan revisi pembimbing 
+        $alasanRevisiList = [
+            'Mohon jelaskan lebih detail kegiatan yang dilakukan.',
+            'Deskripsi kurang lengkap, tambahkan hasil kerja.',
+            'Perlu tambahan foto kegiatan.',
+        ];
+
+        // Komentar pendamping (beberapa jurnal ada komentar, beberapa tidak)
+        $komentarPendampingList = [
+            null,
+            'Bagus, pertahankan kerja kerasmu!',
+            'Terus tingkatkan kemampuan teknismu.',
+            null,
+            'Excellent progress!',
         ];
 
         foreach ($placements as $placementIndex => $placement) {
@@ -72,15 +83,27 @@ class JurnalHarianSeeder extends Seeder
                 $jurnalIndex = ($i + $placementIndex) % count($juduls);
                 $status = $statusList[($i + $placementIndex) % count($statusList)];
 
+                // Tentukan alasan revisi jika status revisi
+                $alasanRevisi = null;
+                if ($status === 'revisi') {
+                    $alasanRevisi = $alasanRevisiList[($i + $placementIndex) % count($alasanRevisiList)];
+                }
+
+                // Komentar pendamping - random
+                $komentarPendamping = $komentarPendampingList[($i + $placementIndex) % count($komentarPendampingList)];
+
                 DB::table('jurnal_harians')->insert([
                     'profile_siswa_id' => $placement->profile_siswa_id,
+                    'mitra_industri_id' => $placement->mitra_industri_id,
+                    'pendamping_id' => null, // Will be set when pendamping comments
                     'pembimbing_id' => $placement->pembimbing_id,
                     'tanggal' => $date->format('Y-m-d'),
                     'judul' => $juduls[$jurnalIndex],
                     'deskripsi' => $deskripsis[$jurnalIndex],
                     'foto_kegiatan' => rand(0, 1) ? 'jurnal/foto_kegiatan_sample.jpg' : null,
                     'status' => $status,
-                    'komentar' => $komentarList[$status],
+                    'alasan_revisi_pembimbing' => $alasanRevisi,
+                    'komentar_pendamping' => $komentarPendamping,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

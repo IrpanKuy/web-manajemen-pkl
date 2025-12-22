@@ -37,7 +37,7 @@ watch(
     { immediate: true }
 );
 
-const SIDEBAR_WIDTH = "16rem";
+const SIDEBAR_WIDTH = "18rem";
 const screenWidth = ref(0);
 
 onMounted(() => {
@@ -80,15 +80,59 @@ const isLinkActive = (routeName) => {
         <transition name="fade-slide">
             <aside
                 v-show="showSidebar"
-                class="h-screen z-50 fixed w-67 flex flex-col"
+                class="h-screen z-50 fixed w-72 flex flex-col"
             >
                 <!-- logo -->
-                <div class="p-3! h-20 bg-white shadow-md shrink-0">
+                <div
+                    class="p-3! h-20 bg-white flex! justify-center! items-center! shadow-md shrink-0"
+                >
                     <img
                         src="/assets/pkl-go.png"
-                        class="bg-cover w-52"
+                        class="bg-cover w-48"
                         alt="pkl-go"
                     />
+                </div>
+
+                <!-- User Greeting -->
+                <div class="bg-[#1E3A8A] p-4! border-b border-red">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center"
+                        >
+                            <Icon
+                                icon="mdi:account"
+                                class="text-white"
+                                width="28"
+                            />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-white/70 text-sm">Selamat Datang,</p>
+                            <p class="text-white font-semibold truncate">
+                                {{ $page.props.auth.user?.name || "User" }}
+                            </p>
+                            <v-chip
+                                size="x-small"
+                                color="white"
+                                variant="outlined"
+                                class="mt-1 text-capitalize"
+                            >
+                                {{
+                                    $page.props.auth.user?.role === "pendamping"
+                                        ? "Pendamping"
+                                        : $page.props.auth.user?.role ===
+                                          "pembimbing"
+                                        ? "Pembimbing"
+                                        : $page.props.auth.user?.role ===
+                                          "supervisors"
+                                        ? "Supervisor"
+                                        : $page.props.auth.user?.role ===
+                                          "siswa"
+                                        ? "Siswa"
+                                        : $page.props.auth.user?.role || "User"
+                                }}
+                            </v-chip>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Scrollable Menu Area -->

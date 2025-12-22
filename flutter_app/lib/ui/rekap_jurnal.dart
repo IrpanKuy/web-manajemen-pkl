@@ -272,7 +272,7 @@ class _RekapJurnalState extends State<RekapJurnal> {
           MaterialPageRoute(
             builder: (context) => DetailJurnalPage(jurnal: item),
           ),
-        );
+        ).then((_) => _fetchData()); // Refresh after returning
       },
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -288,58 +288,106 @@ class _RekapJurnalState extends State<RekapJurnal> {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Date Box
-            Container(
-              width: 50,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF2F4F7), // Light greyish blue
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    _getDateMonthShort(item.tanggal),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF667085),
-                    ),
+            Row(
+              children: [
+                // Date Box
+                Container(
+                  width: 50,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF2F4F7),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  Text(
-                    _getDateDay(item.tanggal),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF101828),
-                    ),
+                  child: Column(
+                    children: [
+                      Text(
+                        _getDateMonthShort(item.tanggal),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF667085),
+                        ),
+                      ),
+                      Text(
+                        _getDateDay(item.tanggal),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF101828),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.judul,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: Color(0xFF101828),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildStatusBadge(item.status),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: Colors.grey),
+              ],
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.judul,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: Color(0xFF101828),
+            // Komentar Pendamping
+            if (item.hasKomentarPendamping) ...[              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3E8FF),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF9333EA).withOpacity(0.3)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.comment, size: 16, color: Color(0xFF9333EA)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Komentar Pendamping:',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF9333EA),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            item.komentarPendamping!,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF6B21A8),
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  _buildStatusBadge(item.status),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const Icon(Icons.chevron_right, color: Colors.grey),
+            ],
           ],
         ),
       ),
@@ -352,7 +400,7 @@ class _RekapJurnalState extends State<RekapJurnal> {
     IconData icon;
     String text;
 
-    // pending, disetujui, revisi/ditolak
+    // pending, disetujui, revisi
     switch (status.toLowerCase()) {
       case 'disetujui':
         bgColor = const Color(0xFFECFDF3);
@@ -366,12 +414,11 @@ class _RekapJurnalState extends State<RekapJurnal> {
         icon = Icons.access_time_filled;
         text = 'Pending';
         break;
-      case 'ditolak':
       case 'revisi':
         bgColor = const Color(0xFFFEF3F2);
         textColor = const Color(0xFFB42318);
-        icon = Icons.cancel;
-        text = 'Ditolak';
+        icon = Icons.edit;
+        text = 'Perlu Revisi';
         break;
       default:
         bgColor = Colors.grey.shade100;

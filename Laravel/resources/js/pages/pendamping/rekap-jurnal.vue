@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from "vue";
-import { router } from "@inertiajs/vue3";
+import { router, useForm } from "@inertiajs/vue3";
+import Swal from "sweetalert2";
 import PendampingDashboardLayout from "../layouts/PendampingDashboardLayout.vue";
 
 // --- PROPS ---
@@ -19,10 +20,17 @@ const filterBulan = ref(props.filters?.bulan || props.bulan || "");
 const filterStatus = ref(props.filters?.status || null);
 const filterPembimbing = ref(props.filters?.pembimbing_id || null);
 const filterMitra = ref(props.filters?.mitra_id || null);
+const filterKomentar = ref(props.filters?.has_komentar || null);
 
 // --- DETAIL DIALOG STATE ---
 const detailDialog = ref(false);
 const selectedJurnal = ref(null);
+
+// --- KOMENTAR DIALOG STATE ---
+const komentarDialog = ref(false);
+const komentarForm = useForm({
+    komentar_pendamping: "",
+});
 
 // --- OPTIONS ---
 const statusOptions = [
@@ -32,14 +40,21 @@ const statusOptions = [
     { value: "revisi", title: "Revisi" },
 ];
 
+const komentarOptions = [
+    { value: null, title: "Semua Komentar" },
+    { value: "1", title: "Sudah Dikomentar" },
+    { value: "0", title: "Belum Dikomentar" },
+];
+
 // --- HEADERS ---
 const headers = [
     { title: "No", key: "index", align: "center", sortable: false },
     { title: "Tanggal", key: "tanggal" },
     { title: "Siswa", key: "siswa_info" },
+    { title: "Mitra", key: "mitra_name" },
     { title: "Judul", key: "judul" },
-    { title: "Pembimbing", key: "pembimbing" },
     { title: "Status", key: "status", align: "center" },
+    { title: "Komentar", key: "has_komentar", align: "center" },
     { title: "Aksi", key: "actions", align: "center", sortable: false },
 ];
 
@@ -53,6 +68,7 @@ const applyFilters = () => {
             status: filterStatus.value || undefined,
             pembimbing_id: filterPembimbing.value || undefined,
             mitra_id: filterMitra.value || undefined,
+            has_komentar: filterKomentar.value || undefined,
         },
         { preserveState: true, replace: true }
     );
@@ -64,12 +80,38 @@ watch(search, () => {
     searchTimeout = setTimeout(applyFilters, 500);
 });
 
-watch([filterBulan, filterStatus, filterPembimbing, filterMitra], applyFilters);
+watch(
+    [filterBulan, filterStatus, filterPembimbing, filterMitra, filterKomentar],
+    applyFilters
+);
 
 // --- DETAIL FUNCTION ---
 const openDetail = (item) => {
     selectedJurnal.value = item;
     detailDialog.value = true;
+};
+
+// --- KOMENTAR FUNCTION ---
+const openKomentarDialog = (item) => {
+    selectedJurnal.value = item;
+    komentarForm.komentar_pendamping = item.komentar_pendamping || "";
+    komentarDialog.value = true;
+};
+
+const submitKomentar = () => {
+    if (!komentarForm.komentar_pendamping.trim()) {
+        return Swal.fire("Gagal!", "Komentar wajib diisi", "error");
+    }
+
+    komentarForm.post(
+        route("rekap-jurnal.beri-komentar", selectedJurnal.value.id),
+        {
+            onSuccess: () => {
+                komentarDialog.value = false;
+                komentarForm.reset();
+            },
+        }
+    );
 };
 
 // --- HELPERS ---
@@ -124,7 +166,7 @@ const title = [
             </v-card-title>
 
             <!-- SUMMARY -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                 <v-card class="pa-4 border-l-4 border-blue-500" elevation="2">
                     <div class="text-caption text-grey">Total Jurnal</div>
                     <div class="text-h4 font-weight-bold text-blue-600">
@@ -147,6 +189,12 @@ const title = [
                     <div class="text-caption text-grey">Revisi</div>
                     <div class="text-h4 font-weight-bold text-red-600">
                         {{ props.summary?.revisi || 0 }}
+                    </div>
+                </v-card>
+                <v-card class="pa-4 border-l-4 border-purple-500" elevation="2">
+                    <div class="text-caption text-grey">Sudah Dikomentar</div>
+                    <div class="text-h4 font-weight-bold text-purple-600">
+                        {{ props.summary?.dengan_komentar || 0 }}
                     </div>
                 </v-card>
             </div>
@@ -182,22 +230,22 @@ const title = [
                     hide-details
                 ></v-select>
                 <v-select
-                    v-model="filterPembimbing"
-                    :items="props.pembimbings"
-                    item-title="name"
+                    v-model="filterMitra"
+                    :items="props.mitras"
+                    item-title="nama_instansi"
                     item-value="id"
-                    label="Filter Pembimbing"
+                    label="Filter Mitra"
                     variant="outlined"
                     density="compact"
                     clearable
                     hide-details
                 ></v-select>
                 <v-select
-                    v-model="filterMitra"
-                    :items="props.mitras"
-                    item-title="nama_instansi"
-                    item-value="id"
-                    label="Filter Mitra"
+                    v-model="filterKomentar"
+                    :items="komentarOptions"
+                    item-title="title"
+                    item-value="value"
+                    label="Filter Komentar"
                     variant="outlined"
                     density="compact"
                     clearable
@@ -217,13 +265,13 @@ const title = [
                 </template>
 
                 <template v-slot:item.tanggal="{ item }">
-                    <div style="min-width: 140px">
+                    <div style="min-width: 120px">
                         {{ formatDate(item.tanggal) }}
                     </div>
                 </template>
 
                 <template v-slot:item.siswa_info="{ item }">
-                    <div class="py-2" style="min-width: 180px">
+                    <div class="py-2" style="min-width: 150px">
                         <div class="font-weight-bold">
                             {{ item.siswa?.user?.name || "N/A" }}
                         </div>
@@ -233,16 +281,18 @@ const title = [
                     </div>
                 </template>
 
+                <template v-slot:item.mitra_name="{ item }">
+                    <div style="min-width: 120px">
+                        {{ item.mitra?.nama_instansi || "-" }}
+                    </div>
+                </template>
+
                 <template v-slot:item.judul="{ item }">
-                    <div style="min-width: 200px; max-width: 300px">
+                    <div style="min-width: 150px; max-width: 250px">
                         <span class="font-medium text-wrap">{{
                             item.judul || "-"
                         }}</span>
                     </div>
-                </template>
-
-                <template v-slot:item.pembimbing="{ item }">
-                    {{ item.pembimbing?.name || "-" }}
                 </template>
 
                 <template v-slot:item.status="{ item }">
@@ -255,14 +305,45 @@ const title = [
                     </v-chip>
                 </template>
 
-                <template v-slot:item.actions="{ item }">
-                    <v-btn
-                        icon="mdi-eye"
-                        color="primary"
+                <template v-slot:item.has_komentar="{ item }">
+                    <v-chip
+                        :color="item.komentar_pendamping ? 'success' : 'grey'"
                         size="small"
-                        variant="text"
-                        @click="openDetail(item)"
-                    ></v-btn>
+                        variant="outlined"
+                    >
+                        {{ item.komentar_pendamping ? "Sudah" : "Belum" }}
+                    </v-chip>
+                </template>
+
+                <template v-slot:item.actions="{ item }">
+                    <v-menu>
+                        <template v-slot:activator="{ props }">
+                            <v-btn
+                                v-bind="props"
+                                icon="mdi-dots-vertical"
+                                variant="text"
+                                size="small"
+                            ></v-btn>
+                        </template>
+                        <v-list density="compact">
+                            <v-list-item
+                                prepend-icon="mdi-eye"
+                                title="Lihat Detail"
+                                @click="openDetail(item)"
+                            ></v-list-item>
+                            <v-divider></v-divider>
+                            <v-list-item
+                                prepend-icon="mdi-comment-text"
+                                :title="
+                                    item.komentar_pendamping
+                                        ? 'Edit Komentar'
+                                        : 'Beri Komentar'
+                                "
+                                class="text-purple"
+                                @click="openKomentarDialog(item)"
+                            ></v-list-item>
+                        </v-list>
+                    </v-menu>
                 </template>
             </v-data-table>
         </v-card>
@@ -300,6 +381,15 @@ const title = [
                                         ?.nama_jurusan || "-"
                                 }})</v-list-item-subtitle
                             >
+                        </v-list-item>
+
+                        <v-list-item>
+                            <v-list-item-title class="font-weight-bold"
+                                >Mitra Industri</v-list-item-title
+                            >
+                            <v-list-item-subtitle>{{
+                                selectedJurnal?.mitra?.nama_instansi || "-"
+                            }}</v-list-item-subtitle>
                         </v-list-item>
 
                         <v-list-item>
@@ -346,25 +436,104 @@ const title = [
                             </v-list-item-subtitle>
                         </v-list-item>
 
-                        <v-list-item v-if="selectedJurnal?.catatan_pembimbing">
+                        <v-list-item v-if="selectedJurnal?.komentar">
                             <v-list-item-title class="font-weight-bold"
                                 >Catatan Pembimbing</v-list-item-title
                             >
                             <v-list-item-subtitle class="text-wrap">{{
-                                selectedJurnal.catatan_pembimbing
+                                selectedJurnal.komentar
+                            }}</v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item v-if="selectedJurnal?.komentar_pendamping">
+                            <v-list-item-title
+                                class="font-weight-bold text-purple"
+                                >Komentar Pendamping</v-list-item-title
+                            >
+                            <v-list-item-subtitle class="text-wrap">{{
+                                selectedJurnal.komentar_pendamping
                             }}</v-list-item-subtitle>
                         </v-list-item>
                     </v-list>
                 </v-card-text>
 
                 <v-card-actions>
+                    <v-btn
+                        color="purple"
+                        variant="flat"
+                        prepend-icon="mdi-comment-text"
+                        @click="
+                            detailDialog = false;
+                            openKomentarDialog(selectedJurnal);
+                        "
+                    >
+                        {{
+                            selectedJurnal?.komentar_pendamping
+                                ? "Edit Komentar"
+                                : "Beri Komentar"
+                        }}
+                    </v-btn>
                     <v-spacer></v-spacer>
                     <v-btn
-                        color="primary"
-                        variant="flat"
+                        color="grey"
+                        variant="text"
                         @click="detailDialog = false"
                     >
                         Tutup
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- KOMENTAR DIALOG -->
+        <v-dialog v-model="komentarDialog" max-width="500px" persistent>
+            <v-card>
+                <v-card-title class="bg-purple text-white">
+                    <span class="text-h6">{{
+                        selectedJurnal?.komentar_pendamping
+                            ? "Edit Komentar"
+                            : "Beri Komentar"
+                    }}</span>
+                </v-card-title>
+
+                <v-card-text class="pt-4">
+                    <p class="mb-3 text-grey-darken-1">
+                        Jurnal: <strong>{{ selectedJurnal?.judul }}</strong
+                        ><br />
+                        Siswa:
+                        <strong>{{ selectedJurnal?.siswa?.user?.name }}</strong>
+                    </p>
+                    <v-textarea
+                        v-model="komentarForm.komentar_pendamping"
+                        label="Komentar Pendamping"
+                        variant="outlined"
+                        rows="4"
+                        auto-grow
+                        placeholder="Berikan komentar untuk jurnal ini..."
+                        :error-messages="
+                            komentarForm.errors.komentar_pendamping
+                        "
+                    ></v-textarea>
+                </v-card-text>
+
+                <v-card-actions class="px-4 pb-4">
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        variant="text"
+                        @click="
+                            komentarDialog = false;
+                            komentarForm.reset();
+                        "
+                    >
+                        Batal
+                    </v-btn>
+                    <v-btn
+                        color="purple"
+                        variant="flat"
+                        :loading="komentarForm.processing"
+                        @click="submitKomentar"
+                    >
+                        Simpan Komentar
                     </v-btn>
                 </v-card-actions>
             </v-card>

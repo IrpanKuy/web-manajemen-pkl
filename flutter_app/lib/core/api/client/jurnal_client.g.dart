@@ -22,11 +22,13 @@ class _JurnalClient implements JurnalClient {
   Future<Map<String, dynamic>> getJurnalList({
     int? month,
     int? year,
+    String? hasKomentar,
   }) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
       r'month': month,
       r'year': year,
+      r'has_komentar': hasKomentar,
     };
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};

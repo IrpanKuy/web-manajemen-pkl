@@ -122,12 +122,12 @@ const bukaDialogRevisi = (jurnal) => {
 // 5. Submit Revisi
 const submitRevisi = () => {
     if (!komentarRevisi.value.trim()) {
-        return Swal.fire("Gagal!", "Komentar revisi wajib diisi", "error");
+        return Swal.fire("Gagal!", "Alasan revisi wajib diisi", "error");
     }
 
     router.put(route("jurnal-siswa.update", selectedJurnal.value.id), {
         status: "revisi",
-        komentar: komentarRevisi.value,
+        alasan_revisi: komentarRevisi.value,
     });
 
     dialogRevisi.value = false;

@@ -59,6 +59,7 @@ Route::prefix('pendamping')->middleware(['HasAuth', 'HasPendamping'])->group(fun
     
     // Rekap Data
     Route::get('rekap-jurnal', [RekapJurnalController::class, 'index'])->name('rekap-jurnal.index');
+    Route::post('rekap-jurnal/{id}/komentar', [RekapJurnalController::class, 'beriKomentar'])->name('rekap-jurnal.beri-komentar');
     Route::get('rekap-izin', [RekapIzinController::class, 'index'])->name('rekap-izin.index');
     
     // Penempatan Siswa

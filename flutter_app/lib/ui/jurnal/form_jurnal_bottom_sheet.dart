@@ -6,8 +6,19 @@ import 'package:flutter_app/core/api/dio_client.dart';
 
 class FormJurnalBottomSheet extends StatefulWidget {
   final VoidCallback onSuccess;
+  final bool isEdit;
+  final int? jurnalId;
+  final String? initialJudul;
+  final String? initialDeskripsi;
 
-  const FormJurnalBottomSheet({super.key, required this.onSuccess});
+  const FormJurnalBottomSheet({
+    super.key,
+    required this.onSuccess,
+    this.isEdit = false,
+    this.jurnalId,
+    this.initialJudul,
+    this.initialDeskripsi,
+  });
 
   @override
   State<FormJurnalBottomSheet> createState() => _FormJurnalBottomSheetState();
@@ -51,6 +62,25 @@ class _FormJurnalBottomSheetState extends State<FormJurnalBottomSheet> {
   bool _isCustomJudul = false;
 
   final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    // Jika mode edit, set initial values
+    if (widget.isEdit && widget.initialJudul != null) {
+      // Check if initialJudul is in dropdown options
+      if (_judulOptions.contains(widget.initialJudul)) {
+        _selectedJudul = widget.initialJudul;
+      } else {
+        _selectedJudul = 'Lainnya (Custom)';
+        _isCustomJudul = true;
+        _judulController.text = widget.initialJudul!;
+      }
+    }
+    if (widget.initialDeskripsi != null) {
+      _deskripsiController.text = widget.initialDeskripsi!;
+    }
+  }
 
   @override
   void dispose() {
@@ -161,22 +191,35 @@ class _FormJurnalBottomSheetState extends State<FormJurnalBottomSheet> {
         ));
       }
 
-      final response = await dio.post('/jurnal', data: formData);
+      Response response;
+      String successMessage;
+      
+      if (widget.isEdit && widget.jurnalId != null) {
+        // Edit/Update mode - use PUT request
+        // Need to add _method field for Laravel to recognize as PUT
+        formData.fields.add(const MapEntry('_method', 'PUT'));
+        response = await dio.post('/jurnal/${widget.jurnalId}', data: formData);
+        successMessage = 'Jurnal berhasil diperbarui!';
+      } else {
+        // Create mode - use POST request
+        response = await dio.post('/jurnal', data: formData);
+        successMessage = 'Jurnal berhasil dibuat!';
+      }
 
       if (response.data['success'] == true) {
         if (mounted) {
           Navigator.pop(context);
           widget.onSuccess();
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Jurnal berhasil dibuat!'),
+            SnackBar(
+              content: Text(successMessage),
               backgroundColor: Colors.green,
             ),
           );
         }
       } else {
         setState(() {
-          _errorMessage = response.data['message'] ?? 'Gagal membuat jurnal';
+          _errorMessage = response.data['message'] ?? 'Gagal menyimpan jurnal';
         });
       }
     } on DioException catch (e) {

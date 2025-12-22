@@ -79,14 +79,20 @@ class JurnalSiswaController extends Controller
         // Validasi
         $request->validate([
             'status' => 'required|in:disetujui,revisi',
-            'komentar' => 'nullable|string|max:1000',
+            'alasan_revisi' => 'nullable|string|max:1000',
         ]);
 
         // Update jurnal
-        $jurnal->update([
+        $updateData = [
             'status' => $request->status,
-            'komentar' => $request->komentar,
-        ]);
+        ];
+        
+        // Jika status revisi, simpan alasan revisi
+        if ($request->status === 'revisi') {
+            $updateData['alasan_revisi_pembimbing'] = $request->alasan_revisi;
+        }
+
+        $jurnal->update($updateData);
 
         $message = $request->status === 'disetujui'
             ? 'Jurnal berhasil disetujui.'
