@@ -31,11 +31,10 @@ const submit = () => {
 </script>
 
 <template>
-    <!-- WAJIB: Bungkus seluruh halaman dengan v-app agar komponen Vuetify bekerja -->
     <v-app>
         <div
             style="
-                background-image: url('/assets/gedung.jpg');
+                background-image: url('/assets/sekolah.jpg');
                 background-size: cover;
                 background-position: center;
                 background-repeat: no-repeat;
@@ -48,7 +47,11 @@ const submit = () => {
             <div
                 class="w-full max-w-md p-8! z-10 border space-y-8! h-screen md:h-auto! border-indigo-100 md:rounded-xl bg-white shadow-lg"
             >
-                <img src="/assets/logo-mutu.png" alt="logo-mutu" />
+                <img
+                    src="/assets/pkl-go.png"
+                    class="w-60 mx-auto"
+                    alt="pkl-go"
+                />
 
                 <h2 class="text-3xl text-center font-bold text-indigo-900">
                     Login
