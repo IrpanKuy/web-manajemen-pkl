@@ -16,318 +16,678 @@ Aplikasi Manajemen Praktik Kerja Lapangan (PKL) dengan teknologi modern yang ter
 
 ---
 
-## 📌 Prasyarat Instalasi
+# 🔧 PROSES 1: Setup Laragon dan PostgreSQL
+
+Proses ini akan memandu Anda untuk menginstall dan mengkonfigurasi Laragon sebagai local development environment beserta PostgreSQL dan PostGIS.
+
+## 📌 Prasyarat Proses 1
 
 Sebelum memulai, pastikan komputer Anda sudah menginstall:
 
 ### 1. Laragon
 
-- Download: [https://laragon.org/download/](https://laragon.org/download/)
-- Pilih versi **Full** untuk mendapatkan semua tools
+- Download: [https://www.filehorse.com/download-laragon/74355/download/](https://www.filehorse.com/download-laragon/74355/download/)
+- versi 6 untuk versi gratis
 
-### 2. PostgreSQL
-
-- Download: [https://www.postgresql.org/download/windows/](https://www.postgresql.org/download/windows/)
-- Ingat password yang Anda set saat instalasi
-
-### 3. PostGIS
-
-- Download: [https://postgis.net/install/](https://postgis.net/install/)
-- Atau install melalui **Stack Builder** setelah install PostgreSQL
-
-### 4. DBeaver
+### 2. DBeaver
 
 - Download: [https://dbeaver.io/download/](https://dbeaver.io/download/)
 - Pilih versi **Community Edition** (gratis)
-
-### 5. Flutter SDK
-
-- Download: [https://docs.flutter.dev/get-started/install/windows](https://docs.flutter.dev/get-started/install/windows)
-- Tambahkan Flutter ke PATH environment variable
-
-### 6. Node.js & NPM
-
-- Download: [https://nodejs.org/](https://nodejs.org/)
-- Pilih versi **LTS** yang direkomendasikan
+- DBeaver digunakan untuk manajemen database secara visual
 
 ---
 
-## 🚀 Langkah Instalasi
+## 🐘 Langkah 1.1: Install PostgreSQL di Laragon
 
-### 1. Clone Repository
+Laragon secara default tidak menyertakan PostgreSQL, jadi kita perlu menambahkannya secara manual.
 
-```bash
-git clone https://github.com/IrpanKuy/web-manajemen-pkl.git
-cd web-manajemen-pkl
-```
-
-Atau jika sudah ada foldernya:
-
-```bash
-cd c:\laragon\www\web-manajemen-pkl
-```
-
----
-
-### 2. Setup Laragon
+### Metode A: Menggunakan Quick Add (Rekomendasi)
 
 1. **Buka Laragon**
-2. Klik **Menu** → **Preferences**
-3. Pastikan **Document Root** mengarah ke `C:\laragon\www`
-4. Klik **Start All** untuk menjalankan Apache dan postgresql
+2. Klik kanan pada jendela Laragon
+3. Pilih **Tools** → **Quick Add** → **postgresql**
+4. Tunggu proses download selesai
+5. Restart Laragon
+
+### Metode B: Install Manual
+
+1. **Download PostgreSQL Binaries**
+
+   - Kunjungi: [https://www.enterprisedb.com/download-postgresql-binaries](https://www.enterprisedb.com/download-postgresql-binaries)
+   - Pilih versi **PostgreSQL 14.x** atau lebih baru untuk Windows x64
+   - Download file zip (bukan installer .exe)
+
+2. **Ekstrak ke Folder Laragon**
+
+   - Ekstrak file zip yang sudah didownload
+   - Pindahkan folder hasil ekstrak ke:
+     ```
+     C:\laragon\bin\postgresql
+     ```
+   - Struktur folder seharusnya seperti:
+     ```
+     C:\laragon\bin\postgresql\postgresql-xx.x\
+     ├── bin\
+     ├── lib\
+     ├── share\
+     └── ...
+     ```
+
+3. **Inisialisasi Database Cluster**
+
+   Buka terminal dari Laragon (klik kanan → Terminal) dan jalankan:
+
+   ```bash
+   # Masuk ke folder bin PostgreSQL
+   cd C:\laragon\bin\postgresql\postgresql-xx.x\bin
+
+   # Inisialisasi database cluster
+   initdb -D "C:\laragon\data\postgresql" -U postgres -W -E UTF8
+   ```
+
+   Anda akan diminta memasukkan password untuk user `postgres`. **Ingat password ini!**
+
+4. **Konfigurasi Laragon untuk PostgreSQL**
+
+   - Buka Laragon
+   - Klik **Menu** → **Preferences** → **Services & Ports**
+   - Pastikan PostgreSQL sudah terdeteksi
+   - Ubah port jika diperlukan (default: 5432)
+
+5. **Jalankan PostgreSQL**
+   - Klik kanan pada Laragon → **PostgreSQL** → **Start PostgreSQL**
+   - Atau klik **Start All**
 
 ---
 
-### 3. Setup PostgreSQL & PostGIS
+## 🌍 Langkah 1.2: Setup Database dan PostGIS dengan DBeaver
 
-#### a. Jalankan PostgreSQL Service
+Setelah PostgreSQL berjalan, gunakan DBeaver untuk membuat database dan menginstall ekstensi PostGIS.
+
+### Step 1: Download PostGIS Bundle
+
+Sebelum bisa mengaktifkan PostGIS di database, Anda harus menginstall PostGIS terlebih dahulu:
+
+1. **Kunjungi halaman download PostGIS**
+
+   - URL: [https://download.osgeo.org/postgis/windows/](https://download.osgeo.org/postgis/windows/)
+   - Pilih folder sesuai versi PostgreSQL Anda (contoh: `pg14/` untuk PostgreSQL 14)
+
+2. **Download file installer**
+
+   - Download file seperti: `postgis-bundle-pg14x64-setup-3.x.x.exe`
+   - Sesuaikan dengan versi PostgreSQL yang terinstall
+
+3. **Jalankan installer PostGIS**
+   - Double-click file yang sudah didownload
+   - Saat installer bertanya lokasi PostgreSQL, arahkan ke:
+     ```
+     C:\laragon\bin\postgresql\postgresql-xx.x
+     ```
+   - Centang semua komponen yang ingin diinstall
+   - Klik **Next** dan selesaikan proses instalasi
+
+---
+
+### Step 2: Buat Koneksi Database di DBeaver
+
+1. **Buka DBeaver**
+
+2. **Buat Koneksi Baru**
+
+   - Klik **Database** → **New Database Connection**
+   - Atau klik ikon **plug** dengan tanda **+** di toolbar
+
+3. **Pilih PostgreSQL**
+
+   - Pada dialog "Select your database", pilih **PostgreSQL**
+   - Klik **Next**
+
+4. **Isi Konfigurasi Koneksi**
+
+   | Field    | Value       |
+   | -------- | ----------- |
+   | Host     | `localhost` |
+   | Port     | `5432`      |
+   | Database | `postgres`  |
+   | Username | `postgres`  |
+   | Password | (kosongkan) |
+
+5. **Test Koneksi**
+
+   - Klik tombol **Test Connection...**
+   - Jika diminta download driver PostgreSQL, klik **Download**
+   - Pastikan muncul pesan "Connected" ✓
+
+6. **Simpan Koneksi**
+   - Klik **Finish**
+   - Koneksi akan muncul di panel sebelah kiri
+
+---
+
+### Step 3: Buat Database Baru
+
+1. **Expand koneksi PostgreSQL** di panel kiri
+
+2. **Buat Database**
+
+   - Klik kanan pada **Databases** → **Create New Database**
+   - Atau klik kanan pada koneksi → **Create** → **Database**
+
+3. **Isi Nama Database**
+
+   - Database name: `db_manajemen_pkl`
+   - Owner: `postgres`
+   - Encoding: `UTF8` (default)
+
+4. **Klik OK** untuk membuat database
+
+5. **Refresh** panel kiri untuk melihat database baru
+
+---
+
+### Step 4: Install Ekstensi PostGIS
+
+1. **Koneksi ke Database yang Baru Dibuat**
+
+   - Di panel kiri, expand **Databases**
+   - Klik kanan pada `db_manajemen_pkl` → **SQL Editor** → **New SQL Script**
+
+2. **Jalankan Query untuk Install PostGIS**
+
+   Ketik query berikut di SQL Editor:
+
+   ```sql
+   -- Install ekstensi PostGIS
+   CREATE EXTENSION IF NOT EXISTS postgis;
+   CREATE EXTENSION IF NOT EXISTS postgis_topology;
+   ```
+
+3. **Execute Query**
+
+   - Tekan **Ctrl + Enter** untuk menjalankan query
+   - Atau klik tombol **Execute SQL Statement** (ikon play ▶️)
+
+4. **Verifikasi Instalasi PostGIS**
+
+   Jalankan query berikut untuk memastikan PostGIS terinstall:
+
+   ```sql
+   -- Cek versi PostGIS
+   SELECT PostGIS_Version();
+   ```
+
+   Output yang diharapkan:
+
+   ```
+   3.x USE_GEOS=1 USE_PROJ=1 USE_STATS=1
+   ```
+
+---
+
+## ✅ Checklist Proses 1
+
+Sebelum lanjut ke Proses 2, pastikan:
+
+- [ ] Laragon sudah terinstall dan berjalan
+- [ ] PostgreSQL sudah terinstall di Laragon dan bisa diakses
+- [ ] Database `db_manajemen_pkl` sudah dibuat
+- [ ] Ekstensi PostGIS sudah aktif di database
+- [ ] `SELECT PostGIS_Version();` menampilkan versi PostGIS
+
+---
+
+# 🌐 PROSES 2: Setup Projek Web (Laravel + Vue)
+
+Proses ini akan memandu Anda untuk melakukan clone repository dan setup projek Laravel sebagai backend API serta Vue.js sebagai frontend.
+
+## 📌 Prasyarat Proses 2
+
+Sebelum memulai, pastikan komputer Anda sudah menginstall:
+
+### 1. nodejs v18.x +
+
+### 2. php v8.2 +
+
+### Cek Instalasi
+
+Buka terminal dan verifikasi:
 
 ```bash
-# Cek apakah PostgreSQL sudah berjalan
-pg_isready
+node -v
+php -v
 
-# Jika belum, jalankan service
-net start postgresql-x64-14
-```
-
-#### b. Install PostGIS Extension
-
-1. Buka **SQL Shell (psql)** atau gunakan DBeaver
-2. Masuk dengan user `postgres`
-3. Jalankan perintah:
-
-```sql
--- Buat database baru
-CREATE DATABASE db_manajemen_pkl;
-
--- Koneksi ke database
-\c db_manajemen_pkl
-
--- Aktifkan PostGIS
-CREATE EXTENSION postgis;
-CREATE EXTENSION postgis_topology;
-
--- Verifikasi instalasi
-SELECT PostGIS_Version();
 ```
 
 ---
 
-### 4. Setup Database dengan DBeaver
+## 📥 Langkah 2.1: Clone Repository
 
-#### a. Buat Koneksi Baru
+1. **Buka Terminal Laragon**
 
-1. Buka **DBeaver**
-2. Klik **Database** → **New Database Connection**
-3. Pilih **PostgreSQL**
-4. Isi konfigurasi:
+   - Klik kanan pada Laragon → **Terminal**
 
-| Field    | Value                   |
-| -------- | ----------------------- |
-| Host     | `localhost`             |
-| Port     | `5432`                  |
-| Database | `db_manajemen_pkl`      |
-| Username | `postgres`              |
-| Password | (password saat install) |
+2. **Masuk ke Document Root**
 
-5. Klik **Test Connection** untuk memastikan berhasil
-6. Klik **Finish**
+   ```bash
+   cd C:\laragon\www
+   ```
 
-#### b. Verifikasi PostGIS
+3. **Clone Repository**
 
-1. Buka SQL Editor (klik kanan pada database → SQL Editor)
-2. Jalankan:
+   ```bash
+   git clone https://github.com/IrpanKuy/web-manajemen-pkl.git
+   ```
 
-```sql
-SELECT * FROM spatial_ref_sys LIMIT 5;
-```
-
-Jika muncul data, berarti PostGIS sudah aktif.
+4. **Masuk ke Folder Project**
+   ```bash
+   cd web-manajemen-pkl
+   ```
+5. **Open Code editor**
+   ```bash
+   code .
+   ```
 
 ---
 
-### 5. Setup Laravel Backend
+## 🔧 Langkah 2.2: Setup Laravel Backend
 
-```bash
-# Masuk ke folder Laravel
-cd Laravel
+1. **Masuk ke Folder Laravel**
 
-# Install dependencies
-composer install
+   ```bash
+   cd Laravel
+   ```
 
-# Copy file environment
-copy .env.example .env
+2. **Install PHP Dependencies**
 
-# Generate application key
-php artisan key:generate
-```
+   ```bash
+   composer install
+   ```
 
-#### Konfigurasi .env
+   Tunggu proses selesai (mungkin membutuhkan beberapa menit)
 
-Buka file `.env` dan sesuaikan:
+3. **Buat File Environment**
+
+   ```bash
+   copy .env.example .env
+   ```
+
+4. **Generate Application Key**
+   ```bash
+   php artisan key:generate
+   ```
+
+---
+
+## ⚙ Langkah 2.3: Konfigurasi Environment (.env)
+
+Buka file `.env` di folder Laravel dengan text editor (VS Code, Notepad++, dll) dan sesuaikan konfigurasi berikut:
 
 ```env
 APP_NAME="Manajemen PKL"
+APP_ENV=local
+APP_KEY=base64:xxxxx  # sudah di-generate otomatis
+APP_DEBUG=true
 APP_URL=http://localhost:8000
 
+# Konfigurasi Database PostgreSQL
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
 DB_PORT=5432
 DB_DATABASE=db_manajemen_pkl
 DB_USERNAME=postgres
-DB_PASSWORD=your_password
+DB_PASSWORD=your_password_here
+
+# Ubah "your_password_here" dengan password PostgreSQL Anda
 ```
 
-#### Jalankan Migrasi & Seeder
+**Penting:** Pastikan `DB_PASSWORD` sesuai dengan password yang Anda set saat install PostgreSQL!
+
+---
+
+## 🗃 Langkah 2.4: Migrasi Database
+
+Jalankan migrasi untuk membuat tabel-tabel yang diperlukan:
 
 ```bash
-# Jalankan migrasi database
+# Pastikan masih di folder Laravel
+cd Laravel
+
+# Jalankan migrasi dan seeder
 php artisan migrate --seed
 ```
 
----
+Jika berhasil, Anda akan melihat output seperti:
 
-### 6. Setup Vue Frontend
-
-Vue frontend terintegrasi dalam Laravel (menggunakan Vite):
-
-```bash
-# Masih di folder Laravel
-cd Laravel
-
-# Install dependencies NPM
-npm install
-
-# Build untuk development
-npm run dev
+```
+Migrating: 2024_xx_xx_xxxxxx_create_users_table
+Migrated:  2024_xx_xx_xxxxxx_create_users_table
+...
+Database seeding completed successfully.
 ```
 
 ---
 
-### 7. Setup Flutter Mobile App
+## 🎨 Langkah 2.5: Setup Vue Frontend
 
-````bash
-# Pindah ke folder Flutter
-cd flutter_app
+Vue.js terintegrasi dalam Laravel menggunakan Vite sebagai build tool.
 
-# Install dependencies
-flutter pub get
+1. **Install NPM Dependencies**
 
+   ```bash
+   # Masih di folder Laravel
+   npm install
+   ```
 
-#### Konfigurasi API URL
-Default menggunakan url chrome bisa di skip jika pakai preview chrome
-Buka file `lib/core/constants/api_constants.dart` dan sesuaikan:
-
-```dart
-class ApiConstants {
-    // untuk chrome
-    static const String baseUrl = 'http://127.0.0.1:8000/ap';
-
-  // Untuk emulator Android
-  static const String baseUrl = 'http://10.0.2.2:8000/api';
-
-  // Untuk HP fisik (ganti dengan IP komputer Anda)
-  // static const String baseUrl = 'http://192.168.x.x:8000/api';
-}
-````
+2. **Verifikasi Instalasi**
+   ```bash
+   npm list vue
+   ```
 
 ---
 
-## ▶ Menjalankan Aplikasi
+## ▶ Langkah 2.6: Menjalankan Aplikasi Web
+
+Anda membutuhkan **2 terminal** untuk menjalankan aplikasi:
 
 ### Terminal 1: Laravel API Server
 
 ```bash
-cd Laravel
+cd C:\laragon\www\web-manajemen-pkl\Laravel
+
+# Jalankan server Laravel
 php artisan serve --host=0.0.0.0 --port=8000
 ```
 
-### Terminal 2: Vue Frontend (Vite)
+Output yang diharapkan:
+
+```
+Starting Laravel development server: http://0.0.0.0:8000
+```
+
+### Terminal 2: Vue Frontend (Vite Dev Server)
+
+Buka terminal baru dari Laragon dan jalankan:
 
 ```bash
-cd Laravel
+cd C:\laragon\www\web-manajemen-pkl\Laravel
+
+# Jalankan Vite development server
 npm run dev
 ```
 
-### Terminal 3: Flutter App
+Output yang diharapkan:
 
-#gunakan chrome jika ingin cepat tapi beberapa fitur seperti file upload dan scan qr tidak berfungsi
-#gunakan hp asli jika ingin semua fitur berfungsi
+```
+VITE v5.x.x ready in xxx ms
 
-#### Jalankan di Chrome
+➜  Local:   http://localhost:5173/
+➜  Network: http://xxx.xxx.xxx.xxx:5173/
+```
+
+### Akses Aplikasi
+
+- **Backend API**: [http://localhost:8000](http://localhost:8000)
+- **Frontend Admin**: [http://localhost:5173](http://localhost:5173) atau sesuai URL dari Vite
+
+---
+
+## ✅ Checklist Proses 2
+
+Sebelum lanjut ke Proses 3, pastikan:
+
+- [ ] Repository sudah di-clone
+- [ ] `composer install` berhasil tanpa error
+- [ ] File `.env` sudah dikonfigurasi dengan benar
+- [ ] `php artisan migrate --seed` berhasil
+- [ ] `npm install` berhasil tanpa error
+- [ ] Laravel server berjalan di port 8000
+- [ ] Vite dev server berjalan
+
+---
+
+# 📱 PROSES 3: Setup Mobile App (Flutter)
+
+Proses ini akan memandu Anda untuk setup Flutter development environment dan menjalankan aplikasi mobile PKL.
+
+## 📌 Prasyarat Proses 3
+
+Sebelum memulai, pastikan komputer Anda sudah menginstall:
+
+### 1. Flutter SDK
+
+- Download: [https://docs.flutter.dev/get-started/install/windows](https://docs.flutter.dev/get-started/install/windows)
+- Ekstrak ke lokasi yang mudah diakses (contoh: `C:\flutter`)
+- Tambahkan Flutter ke PATH environment variable:
+  1. Buka **System Properties** → **Environment Variables**
+  2. Di **User variables**, pilih **Path** → **Edit**
+  3. Klik **New** dan tambahkan: `C:\flutter\bin`
+  4. Klik **OK** untuk menyimpan
+
+### 2. Google Chrome (untuk preview web)
+
+- Download: [https://www.google.com/chrome/](https://www.google.com/chrome/)
+- Install dengan opsi default
+
+### 3. Android Studio (Opsional, untuk preview di HP)
+
+- Download: [https://developer.android.com/studio](https://developer.android.com/studio)
+- Install dengan komponen default
+- Jalankan Android Studio dan install Android SDK
+
+### Verifikasi Instalasi Flutter
+
+Buka terminal baru dan jalankan:
 
 ```bash
-cd flutter_app
+flutter doctor
+```
+
+Untuk preview menggunakan **Chrome**, pastikan output menunjukkan:
+
+```
+[✓] Flutter (Channel stable, 3.x.x)
+[✓] Chrome - develop for the web
+```
+
+Untuk preview menggunakan **HP Android**, pastikan juga:
+
+```
+[✓] Android toolchain - develop for Android devices
+[✓] Connected device (1 available)
+```
+
+Jika ada tanda [!] atau [✗], ikuti saran yang diberikan untuk memperbaiki.
+
+---
+
+## 📦 Langkah 3.1: Install Dependencies Flutter
+
+1. **Buka Terminal Baru**
+
+2. **Masuk ke Folder Flutter App**
+
+   ```bash
+   cd C:\laragon\www\web-manajemen-pkl\flutter_app
+   ```
+
+3. **Install Dependencies**
+
+   ```bash
+   flutter pub get
+   ```
+
+4. **Generate Kode yang Diperlukan** (jika menggunakan build_runner)
+   ```bash
+   dart run build_runner build --delete-conflicting-outputs
+   ```
+
+---
+
+## 🔧 Langkah 3.2: Konfigurasi API URL
+
+Buka file `lib/core/constants/api_constants.dart` dan sesuaikan URL sesuai cara preview yang Anda gunakan:
+
+```dart
+class ApiConstants {
+  // ============================================
+  // PILIH SALAH SATU SESUAI CARA PREVIEW ANDA
+  // ============================================
+
+  // UNTUK CHROME (default)
+  static const String baseUrl = 'http://127.0.0.1:8000/api';
+
+  // UNTUK EMULATOR ANDROID
+  // static const String baseUrl = 'http://10.0.2.2:8000/api';
+
+  // UNTUK HP FISIK (ganti dengan IP komputer Anda)
+  // static const String baseUrl = 'http://192.168.x.x:8000/api';
+}
+```
+
+---
+
+## 🌐 Langkah 3.3: Preview di Chrome (Rekomendasi untuk Development)
+
+Chrome adalah cara tercepat untuk preview aplikasi Flutter selama development.
+
+### Menjalankan Aplikasi
+
+```bash
+# Pastikan sudah di folder flutter_app
+cd C:\laragon\www\web-manajemen-pkl\flutter_app
+
+# Jalankan aplikasi
 flutter run
 ```
 
-pilih chrome
+Saat muncul pilihan device, pilih **Chrome**:
 
-abaikan saja jika ada peringatan error exist in your project
+```
+Connected devices:
+1. Windows (desktop)
+2. Chrome (web)
+3. Edge (web)
 
-### Preview di HP Asli (Android)(opsional) bisa di skip jika menggunakan chrome
+Choose a device:
+```
 
-#### 📲 Untuk Android
+Ketik `2` dan tekan Enter untuk memilih Chrome.
 
-##### Langkah 1: Aktifkan Developer Options di HP
+### Catatan Penting untuk Chrome
+
+⚠️ **Beberapa fitur tidak berfungsi di Chrome:**
+
+- Upload file (seperti upload foto)
+- Scan QR Code
+- Akses kamera/galeri
+
+Untuk testing fitur-fitur tersebut, gunakan HP asli (lihat Langkah 3.4)
+
+### Hot Reload
+
+Saat aplikasi berjalan di Chrome:
+
+- Tekan `r` di terminal untuk **hot reload** (reload cepat)
+- Tekan `R` untuk **hot restart** (restart penuh)
+- Tekan `q` untuk keluar
+
+---
+
+## 📲 Langkah 3.4: Preview di HP Asli (Opsional)
+
+Jika Anda ingin testing semua fitur termasuk kamera dan upload file, gunakan HP Android asli.
+
+### Step 1: Aktifkan Developer Options di HP
 
 1. Buka **Settings** → **About Phone**
-2. Tap **Build Number** 7 kali hingga muncul "You are now a developer"
-3. Kembali ke **Settings** → **Developer Options**
-4. Aktifkan **USB Debugging**
+2. Cari **Build Number** dan tap **7 kali berturut-turut**
+3. Akan muncul notifikasi "You are now a developer!"
+4. Kembali ke **Settings** → **Developer Options** (atau System → Developer Options)
+5. Aktifkan opsi berikut:
+   - **USB Debugging**: ON
+   - **Install via USB**: ON (jika ada)
 
-##### Langkah 2: Hubungkan HP ke Komputer
+### Step 2: Hubungkan HP ke Komputer
 
-1. Sambungkan HP menggunakan kabel USB
-2. Pilih **File Transfer** atau **MTP** pada HP
-3. jika tidak ada berarti USB tidak support
-4. Konfirmasi dialog "Allow USB Debugging" di HP
+1. Sambungkan HP menggunakan **kabel USB data** (bukan kabel charging biasa)
+2. Di HP, pilih mode **File Transfer (MTP)** atau **Transfer files**
+3. Jika muncul dialog "Allow USB Debugging?", centang "Always allow" dan tap **OK**
 
-##### Langkah 3: Verifikasi Koneksi
+💡 **Tips:** Jika tidak muncul dialog di HP, coba:
+
+- Cabut dan pasang ulang kabel USB
+- Gunakan kabel USB yang berbeda
+- Coba port USB yang berbeda di komputer
+
+### Step 3: Verifikasi Koneksi
 
 ```bash
-# Cek apakah HP terdeteksi
 flutter devices
 ```
 
 Output yang diharapkan:
 
 ```
-SM A526B (mobile) • RFXXXXXXXX • android-arm64 • Android 13
+2 connected devices:
+
+SM A526B (mobile)  • RFXXXXXXXX • android-arm64  • Android 13
+Chrome (web)       • chrome     • web-javascript • Google Chrome
 ```
 
-##### Langkah 4: Jalankan Aplikasi
+Nama device akan berbeda sesuai tipe HP Anda.
+
+### Step 4: Konfigurasi Network untuk HP
+
+Karena HP dan komputer adalah device berbeda, Anda perlu menggunakan IP Address komputer.
+
+1. **Cari IP Address Komputer**
+
+   ```bash
+   ipconfig
+   ```
+
+   Cari **IPv4 Address** di bagian WiFi atau Ethernet:
+
+   ```
+   Wireless LAN adapter Wi-Fi:
+      IPv4 Address. . . . . . . . : 192.168.1.100
+   ```
+
+2. **Update API URL**
+
+   Buka `lib/core/constants/api_constants.dart`:
+
+   ```dart
+   class ApiConstants {
+     // Ganti dengan IP komputer Anda
+     static const String baseUrl = 'http://192.168.1.100:8000/api';
+   }
+   ```
+
+3. **Pastikan HP dan Komputer di WiFi yang Sama**
+   - HP dan komputer harus terhubung ke jaringan WiFi yang sama
+   - Atau bisa menggunakan mobile hotspot
+
+### Step 5: Jalankan di HP
 
 ```bash
-cd flutter_app
+cd C:\laragon\www\web-manajemen-pkl\flutter_app
+
 flutter run
 ```
 
-Pilih device HP Anda jika ada multiple devices:
+Pilih device HP Anda dari daftar, atau langsung specify device:
 
 ```bash
-flutter run
+flutter run -d RFXXXXXXXX
 ```
 
-##### Langkah 5: Konfigurasi Network untuk API
+(Ganti `RFXXXXXXXX` dengan device ID dari `flutter devices`)
 
-Karena HP dan komputer berbeda jaringan internal, ubah API URL(pastikan hp dan komputer di jaringan yang sama):
+### Step 6: Pastikan Laravel Accessible
 
-1. Cari IP Address komputer:
-
-```bash
-ipconfig
-```
-
-Cari **IPv4 Address** (contoh: `192.168.1.100`)
-
-2. Update `api_constants.dart`:
-
-```dart
-static const String baseUrl = 'http://192.168.1.100:8000/api';
-```
-
-3. Pastikan Laravel berjalan dengan host 0.0.0.0:
+Laravel harus berjalan dengan host `0.0.0.0` agar bisa diakses dari HP:
 
 ```bash
 php artisan serve --host=0.0.0.0 --port=8000
@@ -335,9 +695,34 @@ php artisan serve --host=0.0.0.0 --port=8000
 
 ---
 
-## 🔧 Troubleshooting
+## ✅ Checklist Proses 3
 
-### Error: PostgreSQL Connection Refused
+Pastikan sebelum testing:
+
+- [ ] `flutter doctor` tidak ada error critical
+- [ ] `flutter pub get` berhasil
+- [ ] API URL sudah dikonfigurasi sesuai cara preview
+- [ ] Laravel server berjalan dengan `--host=0.0.0.0`
+
+Untuk Chrome:
+
+- [ ] Chrome terinstall
+- [ ] Aplikasi berjalan di Chrome
+
+Untuk HP (Opsional):
+
+- [ ] Developer Options aktif
+- [ ] USB Debugging aktif
+- [ ] HP terdeteksi di `flutter devices`
+- [ ] HP dan komputer di jaringan yang sama
+
+---
+
+# 🔧 Troubleshooting
+
+## PostgreSQL Issues
+
+### Error: Connection Refused
 
 ```bash
 # Pastikan PostgreSQL service berjalan
@@ -346,6 +731,29 @@ net start postgresql-x64-14
 # Cek status
 pg_isready -h localhost -p 5432
 ```
+
+### Error: PostGIS Extension Not Found
+
+```sql
+-- Cek ekstensi yang tersedia
+SELECT * FROM pg_available_extensions WHERE name LIKE 'postgis%';
+
+-- Jika ada, install ulang
+DROP EXTENSION IF EXISTS postgis CASCADE;
+CREATE EXTENSION postgis;
+```
+
+## Laravel Issues
+
+### Error: Could not find driver
+
+Pastikan ekstensi `pdo_pgsql` aktif di PHP:
+
+1. Buka `php.ini` di folder Laragon
+2. Cari dan uncomment: `extension=pdo_pgsql`
+3. Restart Laragon
+
+## Flutter Issues
 
 ### Error: Flutter Doctor Issues
 
@@ -357,23 +765,26 @@ flutter doctor -v
 ### Error: Unable to Connect to API dari HP
 
 1. Pastikan HP dan komputer di jaringan WiFi yang sama
-2. Pastikan firewall mengizinkan port 8000
-3. Cek IP komputer dengan `ipconfig`
+2. Pastikan firewall Windows mengizinkan port 8000:
+   - Control Panel → Windows Defender Firewall → Allow an app
+   - Atau nonaktifkan sementara untuk testing
+3. Cek IP komputer sudah benar di `api_constants.dart`
 4. Pastikan Laravel berjalan dengan `--host=0.0.0.0`
 
-### Error: PostGIS Extension Not Found
+### Error: Build Failed with Existing File Conflict
 
-```sql
--- Install ulang extension
-DROP EXTENSION IF EXISTS postgis CASCADE;
-CREATE EXTENSION postgis;
+```bash
+# Hapus cache dan rebuild
+flutter clean
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
 ```
 
 ---
 
-## 📞 Kontak & Support
+# 📞 Kontak & Support
 
-Jika mengalami kendala, silakan hubungi saya 089683889798.
+Jika mengalami kendala, silakan hubungi saya di **089683889798**.
 
 ---
 
