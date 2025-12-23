@@ -346,18 +346,21 @@ class _RekapJurnalState extends State<RekapJurnal> {
               ],
             ),
             // Komentar Pendamping
-            if (item.hasKomentarPendamping) ...[              const SizedBox(height: 12),
+            if (item.hasKomentarPendamping) ...[
+              const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF3E8FF),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFF9333EA).withOpacity(0.3)),
+                  border: Border.all(
+                      color: const Color(0xFF9333EA).withOpacity(0.3)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.comment, size: 16, color: Color(0xFF9333EA)),
+                    const Icon(Icons.comment,
+                        size: 16, color: Color(0xFF9333EA)),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(
