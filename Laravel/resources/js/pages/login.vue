@@ -34,7 +34,7 @@ const submit = () => {
     <v-app>
         <div
             style="
-                background-image: url('/assets/gedung.jpg');
+                background-image: url('/assets/sekolah.jpg');
                 background-size: cover;
                 background-position: center;
                 background-repeat: no-repeat;

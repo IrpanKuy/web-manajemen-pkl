@@ -28,7 +28,7 @@ class Login extends Controller
 
             }
             elseif (Auth::user()->role == 'pendamping') {
-                return redirect()->route('manajemen-role.index');
+                return redirect()->route('pendamping.dashboard');
 
             }elseif (Auth::user()->role == 'pembimbing') {
                 return redirect()->route('jurnal-siswa.index');
