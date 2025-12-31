@@ -115,7 +115,7 @@ class _LoginState extends State<Login> {
                   width: 300,
                   decoration: const BoxDecoration(
                     image: DecorationImage(
-                      image: AssetImage('assets/images/pkl-goo.png'),
+                      image: AssetImage('assets/images/logo-mutu.png'),
                       fit: BoxFit.contain,
                     ),
                   ),

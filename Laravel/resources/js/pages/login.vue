@@ -31,11 +31,10 @@ const submit = () => {
 </script>
 
 <template>
-    <!-- WAJIB: Bungkus seluruh halaman dengan v-app agar komponen Vuetify bekerja -->
     <v-app>
         <div
             style="
-                background-image: url('/assets/sekolah.jpeg');
+                background-image: url('/assets/gedung.jpg');
                 background-size: cover;
                 background-position: center;
                 background-repeat: no-repeat;
