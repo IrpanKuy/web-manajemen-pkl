@@ -182,7 +182,7 @@ class _StatusCardState extends State<StatusCard> {
         } else {
           final jamMasukStr = widget.penempatanData?.mitra?.jamMasuk;
           if (jamMasukStr != null) {
-            countdownText = "⚠️ Anda sudah melewati jam masuk ($jamMasukStr)";
+            countdownText = "Anda sudah melewati jam masuk ($jamMasukStr)";
             showCountdown = true;
           }
         }

@@ -13,6 +13,9 @@ const props = defineProps({
     mitras: Array,
 });
 
+console.log(props.dataHarian);
+console.log("tikus");
+
 // --- STATE ---
 const filterTanggal = ref(props.tanggal || "");
 const search = ref(props.filters?.search || "");
@@ -23,7 +26,7 @@ const filterMitra = ref(props.filters?.mitra_id || null);
 const headers = [
     { title: "No", key: "index", align: "center", sortable: false },
     { title: "Siswa", key: "siswa_info" },
-    { title: "Mitra Industri", key: "mitra" },
+    { title: "Mitra Industri", key: "mitra.nama_instansi" },
     { title: "Pembimbing", key: "pembimbing" },
     { title: "Jam Masuk", key: "jam_masuk", align: "center" },
     { title: "Jam Pulang", key: "jam_pulang", align: "center" },
@@ -51,6 +54,18 @@ watch(search, () => {
 });
 
 watch([filterTanggal, filterPembimbing, filterMitra], applyFilters);
+
+// --- EXPORT FUNCTION ---
+const handleExport = () => {
+    const params = new URLSearchParams();
+    if (filterTanggal.value) params.append("tanggal", filterTanggal.value);
+    if (filterMitra.value) params.append("mitra_id", filterMitra.value);
+    if (filterPembimbing.value)
+        params.append("pembimbing_id", filterPembimbing.value);
+
+    window.location.href =
+        route("laporan-harian.export") + "?" + params.toString();
+};
 
 // --- HELPERS ---
 const getStatusColor = (status) => {
@@ -98,10 +113,19 @@ const title = [
         </template>
 
         <v-card class="pa-4 border border-gray-700" elevation="2" rounded="lg">
-            <v-card-title>
-                <h3 class="text-lg md:text-xl mb-2 font-bold text-wrap">
+            <v-card-title
+                class="d-flex justify-space-between align-center flex-wrap"
+            >
+                <h3 class="text-lg md:text-xl font-bold text-wrap">
                     Laporan Absensi Harian - {{ formatDate(props.tanggal) }}
                 </h3>
+                <v-btn
+                    color="success"
+                    prepend-icon="mdi-file-excel"
+                    @click="handleExport"
+                >
+                    Export Excel
+                </v-btn>
             </v-card-title>
 
             <!-- SUMMARY -->

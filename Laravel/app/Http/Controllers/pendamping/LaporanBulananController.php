@@ -7,7 +7,7 @@ use App\Models\Instansi\MitraIndustri;
 use App\Models\Instansi\PklPlacement;
 use App\Models\Siswa\Absensi;
 use App\Models\User;
-use App\Exports\AbsensiBulananExport;
+use App\Exports\PendampingAbsensiBulananExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
@@ -71,7 +71,7 @@ class LaporanBulananController extends Controller
                     'nisn' => $placement->siswa->nisn,
                     'jurusan' => $placement->siswa->jurusan->nama_jurusan ?? '-',
                 ],
-                'mitra' => $placement->mitra->nama_mitra ?? '-',
+                'mitra' => $placement->mitra->nama_instansi ?? '-',
                 'pembimbing' => $placement->pembimbing->name ?? '-',
                 'rekap' => [
                     'hadir' => $absensi['hadir'] ?? 0,
@@ -120,10 +120,10 @@ class LaporanBulananController extends Controller
     {
         $bulan = $request->get('bulan', date('Y-m'));
         $mitraId = $request->get('mitra_id');
+        $pembimbingId = $request->get('pembimbing_id');
         
         $filename = 'laporan-absensi-bulanan-' . $bulan . '.xlsx';
         
-        return Excel::download(new AbsensiBulananExport($bulan, $mitraId), $filename);
+        return Excel::download(new PendampingAbsensiBulananExport($bulan, $mitraId, $pembimbingId), $filename);
     }
 }
-

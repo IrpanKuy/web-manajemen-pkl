@@ -94,7 +94,7 @@ const isLinkActive = (routeName) => {
                 </div>
 
                 <!-- User Greeting -->
-                <div class="bg-[#1E3A8A] p-4! border-b border-red">
+                <div class="bg-[#1E3A8A] p-4! border-b border-white/40!">
                     <div class="flex items-center gap-3">
                         <div
                             class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center"
@@ -137,7 +137,7 @@ const isLinkActive = (routeName) => {
 
                 <!-- Scrollable Menu Area -->
                 <div
-                    class="bg-linear-to-b flex-1 overflow-y-auto from-[#1E3A8A] to-[#264AB3]"
+                    class="bg-linear-to-b flex-1 overflow-y-auto from-[#1E3A8A] to-[#1a398f]"
                 >
                     <div class="flex flex-col gap-4 p-5!">
                         <slot name="sidebar-menu" />
@@ -146,7 +146,7 @@ const isLinkActive = (routeName) => {
 
                 <!-- Fixed Logout Button -->
                 <div
-                    class="bg-[#264AB3] p-5! shrink-0 border-t-2 border-white/30"
+                    class="bg-[#1a398f] p-5! shrink-0 border-t-2 border-white/30"
                 >
                     <div
                         @click="logout"

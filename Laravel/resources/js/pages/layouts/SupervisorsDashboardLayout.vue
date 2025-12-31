@@ -16,6 +16,31 @@ const openLaporan = ref(false);
 const isLinkActive = (routeName) => {
     return currentRouteName.value === routeName;
 };
+
+// Computed untuk mengecek apakah ada link dalam group Laporan Absensi yang aktif
+const isLaporanActive = computed(() => {
+    return (
+        isLinkActive("data-absensi-harian.index") ||
+        isLinkActive("data-absensi-bulanan.index")
+    );
+});
+
+// Fungsi untuk membuka dropdown berdasarkan route yang aktif
+const initializeDropdowns = () => {
+    if (isLaporanActive.value) {
+        openLaporan.value = true;
+    }
+};
+
+// Inisialisasi saat komponen dimount
+onMounted(() => {
+    initializeDropdowns();
+});
+
+// Watch perubahan route untuk mengupdate dropdown
+watch(currentRouteName, () => {
+    initializeDropdowns();
+});
 </script>
 <template>
     <DashboardLayout>

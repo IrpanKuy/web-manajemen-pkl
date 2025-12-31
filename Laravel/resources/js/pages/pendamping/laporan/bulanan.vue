@@ -61,6 +61,8 @@ const handleExport = () => {
     const params = new URLSearchParams();
     if (filterBulan.value) params.append("bulan", filterBulan.value);
     if (filterMitra.value) params.append("mitra_id", filterMitra.value);
+    if (filterPembimbing.value)
+        params.append("pembimbing_id", filterPembimbing.value);
 
     window.location.href =
         route("laporan-bulanan.export") + "?" + params.toString();
@@ -223,7 +225,9 @@ const title = [
                 </template>
 
                 <template v-slot:item.mitra="{ item }">
-                    {{ item.mitra || "-" }}
+                    <div class="w-50!">
+                        {{ item.mitra || "-" }}
+                    </div>
                 </template>
 
                 <template v-slot:item.pembimbing="{ item }">

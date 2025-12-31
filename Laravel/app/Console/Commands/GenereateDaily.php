@@ -76,7 +76,30 @@ class GenereateDaily extends Command
         $this->line("");
 
         // ================================================================
-        // STEP 3: Generate absensi HANYA untuk PKL dengan status 'berjalan'
+        // STEP 3: Update absensi yang masih 'pending' dari hari sebelumnya
+        //         menjadi 'alpha' (tidak hadir tanpa keterangan)
+        // ================================================================
+        $yesterday = Carbon::yesterday();
+        
+        $pendingAbsensi = \App\Models\Siswa\Absensi::where('status_kehadiran', 'pending')
+            ->whereDate('tanggal', '<', $today->toDateString())
+            ->get();
+
+        foreach ($pendingAbsensi as $absensi) {
+            $absensi->update(['status_kehadiran' => 'alpha']);
+            $this->line("⚠ Absensi ID {$absensi->id} (Siswa ID: {$absensi->profile_siswa_id}, Tanggal: {$absensi->tanggal}) diubah dari 'pending' menjadi 'alpha'");
+        }
+
+        if ($pendingAbsensi->count() > 0) {
+            $this->warn("Total {$pendingAbsensi->count()} absensi diubah dari 'pending' menjadi 'alpha'.");
+        } else {
+            $this->line("Tidak ada absensi pending dari hari sebelumnya.");
+        }
+
+        $this->line("");
+
+        // ================================================================
+        // STEP 4: Generate absensi HANYA untuk PKL dengan status 'berjalan'
         // ================================================================
         $activePlacements = PklPlacement::with('mitra')
             ->where('status', 'berjalan')

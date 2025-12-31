@@ -245,9 +245,9 @@ Proses ini akan memandu Anda untuk melakukan clone repository dan setup projek L
 
 Sebelum memulai, pastikan komputer Anda sudah menginstall:
 
-### 1. nodejs v18.x +
+### 1. nodejs v20.19+
 
-### 2. php v8.2 +
+### 2. php v8.2+
 
 ### Cek Instalasi
 
@@ -288,7 +288,7 @@ php -v
    code .
    ```
 
----
+## di dalam kode editor akan melihat total problems error mencapai ribuan, hiraukan saja itu karna belum setup dependensi dari flutter
 
 ## 🔧 Langkah 2.2: Setup Laravel Backend
 
@@ -324,7 +324,7 @@ php -v
 Buka file `.env` di folder Laravel dengan text editor (VS Code, Notepad++, dll) dan sesuaikan konfigurasi berikut:
 
 ```env
-APP_NAME="Manajemen PKL"
+APP_NAME=Manajemen-PKL
 APP_ENV=local
 APP_KEY=base64:xxxxx  # sudah di-generate otomatis
 APP_DEBUG=true
@@ -336,12 +336,9 @@ DB_HOST=127.0.0.1
 DB_PORT=5432
 DB_DATABASE=db_manajemen_pkl
 DB_USERNAME=postgres
-DB_PASSWORD=your_password_here
+DB_PASSWORD=
 
-# Ubah "your_password_here" dengan password PostgreSQL Anda
 ```
-
-**Penting:** Pastikan `DB_PASSWORD` sesuai dengan password yang Anda set saat install PostgreSQL!
 
 ---
 
@@ -357,14 +354,7 @@ cd Laravel
 php artisan migrate --seed
 ```
 
-Jika berhasil, Anda akan melihat output seperti:
-
-```
-Migrating: 2024_xx_xx_xxxxxx_create_users_table
-Migrated:  2024_xx_xx_xxxxxx_create_users_table
-...
-Database seeding completed successfully.
-```
+Jika terjadi error terkait kolom geography itu berarti extensi PostGist belum terinstal dengan benar pastikan kamu membuka sql editor dan install postgis di dbeaver dari postgres/Databases/db_manajemen_pkl bukan dari postgres
 
 ---
 
@@ -396,13 +386,7 @@ Anda membutuhkan **2 terminal** untuk menjalankan aplikasi:
 cd C:\laragon\www\web-manajemen-pkl\Laravel
 
 # Jalankan server Laravel
-php artisan serve --host=0.0.0.0 --port=8000
-```
-
-Output yang diharapkan:
-
-```
-Starting Laravel development server: http://0.0.0.0:8000
+php artisan serve
 ```
 
 ### Terminal 2: Vue Frontend (Vite Dev Server)
@@ -416,32 +400,30 @@ cd C:\laragon\www\web-manajemen-pkl\Laravel
 npm run dev
 ```
 
-Output yang diharapkan:
+jika sudah menjalankan php artisan serve dan npm run dev, bisa pergi ke url http://127.0.0.1:8000/login untuk mencoba aplikasi
 
+catatan: semua password akun adalah "password"
+Role pendamping: email: pendamping1@gmail.com
+Role supervisors: email: spv1@mitra.com
+Role pembimbing: email: pembimbing1@mitra.com
+
+dan jalankan di Direktri Laravel
+
+```bash
+php artisan daily:generate
 ```
-VITE v5.x.x ready in xxx ms
 
-➜  Local:   http://localhost:5173/
-➜  Network: http://xxx.xxx.xxx.xxx:5173/
-```
-
-### Akses Aplikasi
-
-- **Backend API**: [http://localhost:8000](http://localhost:8000)
-- **Frontend Admin**: [http://localhost:5173](http://localhost:5173) atau sesuai URL dari Vite
-
----
+## Pastikan perintah daily:generate selalu dijalankan setiap kali ingin menggunakan aplikasi, karna data absensi hari sekarang akan di create dengan perintah tersebut, jika tidak akan terjadi error
 
 ## ✅ Checklist Proses 2
 
 Sebelum lanjut ke Proses 3, pastikan:
 
 - [ ] Repository sudah di-clone
-- [ ] `composer install` berhasil tanpa error
 - [ ] File `.env` sudah dikonfigurasi dengan benar
 - [ ] `php artisan migrate --seed` berhasil
 - [ ] `npm install` berhasil tanpa error
-- [ ] Laravel server berjalan di port 8000
+- [ ] Laravel server berjalan
 - [ ] Vite dev server berjalan
 
 ---
@@ -463,17 +445,6 @@ Sebelum memulai, pastikan komputer Anda sudah menginstall:
   2. Di **User variables**, pilih **Path** → **Edit**
   3. Klik **New** dan tambahkan: `C:\flutter\bin`
   4. Klik **OK** untuk menyimpan
-
-### 2. Google Chrome (untuk preview web)
-
-- Download: [https://www.google.com/chrome/](https://www.google.com/chrome/)
-- Install dengan opsi default
-
-### 3. Android Studio (Opsional, untuk preview di HP)
-
-- Download: [https://developer.android.com/studio](https://developer.android.com/studio)
-- Install dengan komponen default
-- Jalankan Android Studio dan install Android SDK
 
 ### Verifikasi Instalasi Flutter
 
@@ -497,7 +468,7 @@ Untuk preview menggunakan **HP Android**, pastikan juga:
 [✓] Connected device (1 available)
 ```
 
-Jika ada tanda [!] atau [✗], ikuti saran yang diberikan untuk memperbaiki.
+Jika ada tanda [!] atau [✗] kecuali Visual Studio, ikuti saran yang diberikan untuk memperbaiki.
 
 ---
 
@@ -574,13 +545,20 @@ Choose a device:
 
 Ketik `2` dan tekan Enter untuk memilih Chrome.
 
+dan jalankan di Direktri Laravel
+
+```bash
+php artisan daily:generate
+```
+
+Pastikan perintah daily:generate selalu dijalankan setiap kali ingin menggunakan aplikasi, karna data absensi hari sekarang akan di create dengan perintah tersebut, jika tidak akan terjadi error
+
 ### Catatan Penting untuk Chrome
 
 ⚠️ **Beberapa fitur tidak berfungsi di Chrome:**
 
-- Upload file (seperti upload foto)
+- Upload file
 - Scan QR Code
-- Akses kamera/galeri
 
 Untuk testing fitur-fitur tersebut, gunakan HP asli (lihat Langkah 3.4)
 
@@ -693,7 +671,13 @@ Laravel harus berjalan dengan host `0.0.0.0` agar bisa diakses dari HP:
 php artisan serve --host=0.0.0.0 --port=8000
 ```
 
----
+dan jalankan di Direktri Laravel
+
+```bash
+php artisan daily:generate
+```
+
+## Pastikan perintah daily:generate selalu dijalankan setiap kali ingin menggunakan aplikasi, karna data absensi hari sekarang akan di create dengan perintah tersebut, jika tidak akan terjadi error
 
 ## ✅ Checklist Proses 3
 
@@ -788,4 +772,4 @@ Jika mengalami kendala, silakan hubungi saya di **089683889798**.
 
 ---
 
-**Happy Coding! 🚀**
+**Semoga Instalasi Lancar!**

@@ -309,14 +309,19 @@ const props = defineProps({
                         </div>
 
                         <template #actions>
-                            <v-btn color="grey" variant="text" @click="step = 1"
-                                >Batal</v-btn
-                            >
+                            <Link :href="route('mitra-industri.index')">
+                                <v-btn
+                                    color="grey"
+                                    variant="text"
+                                    @click="step = 1"
+                                    >Batal</v-btn
+                                >
+                            </Link>
                             <v-btn
                                 color="primary"
                                 variant="elevated"
                                 @click="step = 2"
-                                >Lanjut 🚀</v-btn
+                                >Lanjut</v-btn
                             >
                         </template>
                     </v-card>

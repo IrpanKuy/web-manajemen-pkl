@@ -21,6 +21,39 @@ const pendampingNotifications = computed(
 const isLinkActive = (routeName) => {
     return currentRouteName.value === routeName;
 };
+
+// Computed untuk mengecek apakah ada link dalam group Master Data yang aktif
+const isMasterDataActive = computed(() => {
+    return isLinkActive("jurusan.index") || isLinkActive("data-siswa.index");
+});
+
+// Computed untuk mengecek apakah ada link dalam group Laporan Absensi yang aktif
+const isLaporanActive = computed(() => {
+    return (
+        isLinkActive("laporan-harian.index") ||
+        isLinkActive("laporan-bulanan.index")
+    );
+});
+
+// Fungsi untuk membuka dropdown berdasarkan route yang aktif
+const initializeDropdowns = () => {
+    if (isMasterDataActive.value) {
+        showMasterDataDropdown.value = true;
+    }
+    if (isLaporanActive.value) {
+        showLaporanDropdown.value = true;
+    }
+};
+
+// Inisialisasi saat komponen dimount
+onMounted(() => {
+    initializeDropdowns();
+});
+
+// Watch perubahan route untuk mengupdate dropdown
+watch(currentRouteName, () => {
+    initializeDropdowns();
+});
 </script>
 <template>
     <DashboardLayout>

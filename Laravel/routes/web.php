@@ -54,6 +54,7 @@ Route::prefix('pendamping')->middleware(['HasAuth', 'HasPendamping'])->group(fun
     
     // Laporan Absensi
     Route::get('laporan-harian', [LaporanHarianController::class, 'index'])->name('laporan-harian.index');
+    Route::get('laporan-harian/export', [LaporanHarianController::class, 'export'])->name('laporan-harian.export');
     Route::get('laporan-bulanan', [LaporanBulananController::class, 'index'])->name('laporan-bulanan.index');
     Route::get('laporan-bulanan/export', [LaporanBulananController::class, 'export'])->name('laporan-bulanan.export');
     

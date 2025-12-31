@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\pendamping;
 
+use App\Exports\PendampingAbsensiHarianExport;
 use App\Http\Controllers\Controller;
 use App\Models\Instansi\MitraIndustri;
 use App\Models\Instansi\PklPlacement;
@@ -10,6 +11,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class LaporanHarianController extends Controller
 {
@@ -62,7 +64,7 @@ class LaporanHarianController extends Controller
                     'nisn' => $placement->siswa->nisn,
                     'jurusan' => $placement->siswa->jurusan->nama_jurusan ?? '-',
                 ],
-                'mitra' => $placement->mitra->nama_mitra ?? '-',
+                'mitra' => $placement->mitra->nama_instansi ?? '-',
                 'pembimbing' => $placement->pembimbing->name ?? '-',
                 'absensi' => $absensi ? [
                     'jam_masuk' => $absensi->jam_masuk,
@@ -99,5 +101,19 @@ class LaporanHarianController extends Controller
             'pembimbings' => $pembimbings,
             'mitras' => $mitras,
         ]);
+    }
+
+    /**
+     * Export daily attendance report to Excel
+     */
+    public function export(Request $request)
+    {
+        $tanggal = $request->get('tanggal', Carbon::today()->format('Y-m-d'));
+        $mitraId = $request->get('mitra_id');
+        $pembimbingId = $request->get('pembimbing_id');
+        
+        $filename = 'laporan-absensi-harian-' . $tanggal . '.xlsx';
+        
+        return Excel::download(new PendampingAbsensiHarianExport($tanggal, $mitraId, $pembimbingId), $filename);
     }
 }
